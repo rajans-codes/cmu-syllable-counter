@@ -1,0 +1,24 @@
+{
+  "name": "cmu-dictionary-rollup-tree-shaking-demo",
+  "version": "1.0.0",
+  "description": "Rollup demo of tree-shaking capabilities",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "build:minimal": "rollup -c rollup.minimal.js",
+    "build:hyphenation": "rollup -c rollup.hyphenation.js",
+    "build:text-analysis": "rollup -c rollup.text-analysis.js",
+    "build:analytics": "rollup -c rollup.analytics.js",
+    "build:everything": "rollup -c rollup.everything.js",
+    "analyze": "node analyze-rollup-bundles.js"
+  },
+  "devDependencies": {
+    "rollup": "^3.28.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "rollup-plugin-visualizer": "^5.9.0"
+  },
+  "dependencies": {
+    "cmu-dictionary": "file:../"
+  }
+}

@@ -1,0 +1,1 @@
+The most accurate English syllable counter using CMU Dictionary (135k+ words) with intelligent fallback, advanced hyphenation, and TypeScript support. Perfect for text analysis, poetry, and educational tools.
