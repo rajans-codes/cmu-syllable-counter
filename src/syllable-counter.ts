@@ -1,6 +1,6 @@
 import { cmuDictionary } from './dictionary';
-import { fallbackSyllableCount } from './fallback';
-import { enhancedHyphenation } from './hyphenation';
+import { enhancedFallbackSyllableCount } from './fallback-syllable-count';
+import { enhancedHyphenateWord, getSyllableBoundaries } from './fallback-hyphenation';
 import { enhancedCMUHyphenation } from './cmu-hyphenation';
 import type { SyllableInfo, SyllableCountOptions, HyphenationOptions } from './types';
 
@@ -11,16 +11,6 @@ import type { SyllableInfo, SyllableCountOptions, HyphenationOptions } from './t
 export class SyllableCounter {
   private cache: Map<string, SyllableInfo> = new Map();
   private maxCacheSize = 1000;
-  private useCache = true;
-
-  constructor(options?: SyllableCountOptions) {
-    if (options?.enableCache === false) {
-      this.useCache = false;
-    }
-    if (options?.maxCacheSize) {
-      this.maxCacheSize = options.maxCacheSize;
-    }
-  }
 
   /**
    * Get detailed syllable information for a word
@@ -42,17 +32,17 @@ export class SyllableCounter {
     const normalizedWord = word.trim();
     
     // Check cache first
-    if (this.useCache && this.cache.has(normalizedWord)) {
+    if (this.cache.has(normalizedWord)) {
       return this.cache.get(normalizedWord)!;
     }
 
     // Try CMU Dictionary first
-    const pronunciation = await cmuDictionary.lookup(normalizedWord);
+    const pronunciation = await cmuDictionary.getPronunciation(normalizedWord);
     if (pronunciation) {
       const syllableCount = await cmuDictionary.getSyllableCount(normalizedWord);
       
       // Try CMU-based hyphenation first
-      const cmuHyphenationResult = enhancedCMUHyphenation(normalizedWord, pronunciation);
+      const cmuHyphenationResult = enhancedCMUHyphenation(normalizedWord, pronunciation, options);
       let hyphenated: string;
       let boundaries: number[];
       
@@ -60,10 +50,9 @@ export class SyllableCounter {
         hyphenated = cmuHyphenationResult.hyphenated;
         boundaries = cmuHyphenationResult.boundaries;
       } else {
-        // Fall back to vowel-based hyphenation
-        const fallbackResult = enhancedHyphenation(normalizedWord, options);
-        hyphenated = fallbackResult.hyphenated;
-        boundaries = fallbackResult.boundaries;
+        // Fall back to pattern-based hyphenation
+        hyphenated = enhancedHyphenateWord(normalizedWord, options);
+        boundaries = getSyllableBoundaries(normalizedWord);
       }
       
       const info: SyllableInfo = {
@@ -79,127 +68,23 @@ export class SyllableCounter {
       return info;
     }
 
-    // Use fallback if enabled
-    if (options?.useFallback !== false) {
-      const fallbackCount = options?.fallbackCounter 
-        ? options.fallbackCounter(normalizedWord)
-        : fallbackSyllableCount(normalizedWord);
-      
-      const { hyphenated, boundaries } = enhancedHyphenation(normalizedWord, options);
-      
-      const info: SyllableInfo = {
-        word: normalizedWord,
-        syllables: fallbackCount,
-        hyphenated,
-        source: 'fallback',
-        syllableBoundaries: options.includeBoundaries ? boundaries : undefined
-      };
-      
-      this.cacheResult(normalizedWord, info);
-      return info;
-    }
-
-    // Return empty info if no fallback
-    return {
+    // Use fallback when CMU dictionary doesn't have the word
+    const fallbackCount = enhancedFallbackSyllableCount(normalizedWord);
+    
+    const hyphenated = enhancedHyphenateWord(normalizedWord, options);
+    const boundaries = getSyllableBoundaries(normalizedWord);
+    
+    const info: SyllableInfo = {
       word: normalizedWord,
-      syllables: 0,
-      hyphenated: normalizedWord,
+      syllables: fallbackCount,
+      hyphenated,
       source: 'fallback',
-      syllableBoundaries: []
+      syllableBoundaries: options.includeBoundaries ? boundaries : undefined
     };
-  }
-
-  /**
-   * Get syllable information for multiple words
-   */
-  async getTextSyllableInfo(
-    text: string, 
-    options: SyllableCountOptions & HyphenationOptions = {}
-  ): Promise<SyllableInfo[]> {
-    if (!text || text.length === 0) return [];
-
-    const words = this.textToWords(text);
-    const results: SyllableInfo[] = [];
-
-    for (const word of words) {
-      const info = await this.getSyllableInfo(word, options);
-      results.push(info);
-    }
-
-    return results;
-  }
-
-  /**
-   * Get summary statistics for text
-   */
-  async getTextSummary(
-    text: string, 
-    options: SyllableCountOptions & HyphenationOptions = {}
-  ): Promise<{
-    totalSyllables: number;
-    totalWords: number;
-    cmuWords: number;
-    fallbackWords: number;
-    averageSyllablesPerWord: number;
-    wordDetails: SyllableInfo[];
-  }> {
-    const wordDetails = await this.getTextSyllableInfo(text, options);
     
-    const totalSyllables = wordDetails.reduce((sum, info) => sum + info.syllables, 0);
-    const totalWords = wordDetails.length;
-    const cmuWords = wordDetails.filter(info => info.source === 'cmu').length;
-    const fallbackWords = wordDetails.filter(info => info.source === 'fallback').length;
-    const averageSyllablesPerWord = totalWords > 0 ? totalSyllables / totalWords : 0;
-
-    return {
-      totalSyllables,
-      totalWords,
-      cmuWords,
-      fallbackWords,
-      averageSyllablesPerWord,
-      wordDetails
-    };
+    this.cacheResult(normalizedWord, info);
+    return info;
   }
-
-  /**
-   * Hyphenate a word with syllable information
-   */
-  async hyphenateWord(
-    word: string, 
-    options: HyphenationOptions = {}
-  ): Promise<{
-    word: string;
-    hyphenated: string;
-    syllables: number;
-    source: 'cmu' | 'fallback';
-    boundaries: number[];
-  }> {
-    const info = await this.getSyllableInfo(word, { ...options, includeBoundaries: true });
-    
-    return {
-      word: info.word,
-      hyphenated: info.hyphenated,
-      syllables: info.syllables,
-      source: info.source,
-      boundaries: info.syllableBoundaries || []
-    };
-  }
-
-  /**
-   * Get pronunciation for a word
-   */
-  async getPronunciation(word: string): Promise<string | null> {
-    return await cmuDictionary.lookup(word);
-  }
-
-  /**
-   * Check if a word is in the CMU dictionary
-   */
-  async isInDictionary(word: string): Promise<boolean> {
-    return await cmuDictionary.hasWord(word);
-  }
-
-
 
   /**
    * Clear the cache
@@ -232,8 +117,6 @@ export class SyllableCounter {
    * Cache a result with LRU eviction
    */
   private cacheResult(word: string, info: SyllableInfo): void {
-    if (!this.useCache) return;
-
     // Implement LRU cache
     if (this.cache.size >= this.maxCacheSize) {
       const firstKey = this.cache.keys().next().value;

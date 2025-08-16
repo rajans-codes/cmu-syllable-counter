@@ -1,26 +1,14 @@
-// Main entry point - tree-shakable exports
-// Import only what you need to reduce bundle size
+// Main syllable counting function
+export { getSyllableCount } from './core';
 
-// Core syllable counting functionality
-export * from './core';
+// Dictionary functionality
+export { cmuDictionary } from './dictionary';
 
-// Hyphenation functionality (optional)
-export * from './hyphenation';
+// Enhanced hyphenation function
+export { enhancedHyphenateWord } from './fallback-hyphenation';
 
-// CMU hyphenation functionality (optional)
-export * from './cmu-hyphenation';
+// Fallback syllable counting algorithm
+export { enhancedFallbackSyllableCount } from './fallback-syllable-count';
 
-// Text analysis functionality (optional)
-export * from './text-analysis';
-
-// Dictionary utilities (optional)
-export * from './dictionary-module';
-
-// Analytics functionality (optional)
-export * from './analytics';
-
-// Cache management (optional)
-export * from './cache';
-
-// Shared utilities (optional)
-export * from './shared-utils';
+// Core types
+export type { SyllableInfo, HyphenationOptions } from './types';

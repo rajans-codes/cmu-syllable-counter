@@ -93,3 +93,5 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+src/extras/

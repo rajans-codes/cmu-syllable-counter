@@ -11,30 +11,6 @@
       "import": "./dist/index.esm.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./core": {
-      "import": "./dist/core.esm.js",
-      "types": "./dist/core.d.ts"
-    },
-    "./text-analysis": {
-      "import": "./dist/text-analysis.esm.js",
-      "types": "./dist/text-analysis.d.ts"
-    },
-    "./hyphenation": {
-      "import": "./dist/hyphenation.esm.js",
-      "types": "./dist/hyphenation.d.ts"
-    },
-    "./dictionary-module": {
-      "import": "./dist/dictionary-module.esm.js",
-      "types": "./dist/dictionary-module.d.ts"
-    },
-    "./analytics": {
-      "import": "./dist/analytics.esm.js",
-      "types": "./dist/analytics.d.ts"
-    },
-    "./cache": {
-      "import": "./dist/cache.esm.js",
-      "types": "./dist/cache.d.ts"
     }
   },
   "files": [
@@ -64,16 +40,16 @@
     "phonetics",
     "language"
   ],
-  "author": "CMU Syllable Counter Contributors",
+  "author": "Rajan Singh",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cmusphinx/cmu-syllable-counter.git"
+    "url": "https://github.com/rajans-codes/cmu-syllable-counter.git"
   },
   "bugs": {
-    "url": "https://github.com/cmusphinx/cmu-syllable-counter/issues"
+    "url": "https://github.com/rajans-codes/cmu-syllable-counter/issues"
   },
-  "homepage": "https://github.com/cmusphinx/cmu-syllable-counter#readme",
+  "homepage": "https://github.com/rajans-codes/cmu-syllable-counter#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",

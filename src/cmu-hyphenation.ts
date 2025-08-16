@@ -1,4 +1,5 @@
 import { ARPABET_VOWELS, DIGRAPHS } from './dictionary';
+import type { HyphenationOptions } from './types';
 
 function getCMUBoundaries(word: string, phonemes: string[]): number[] {
   const boundaries: number[] = [];
@@ -80,13 +81,13 @@ function mapPhonemesToWord(word: string, phonemes: string[]): number[] {
   return positions;
 }
 
-function applyHyphenation(word: string, boundaries: number[]): string {
+function applyHyphenation(word: string, boundaries: number[], delimiter: string = '-'): string {
   if (!boundaries.length) return word;
 
   let result = '';
   let lastIdx = 0;
   for (const b of boundaries) {
-    result += word.slice(lastIdx, b) + '-';
+    result += word.slice(lastIdx, b) + delimiter;
     lastIdx = b;
   }
   result += word.slice(lastIdx);
@@ -97,16 +98,18 @@ function applyHyphenation(word: string, boundaries: number[]): string {
  * Enhanced CMU hyphenation with better position mapping
  */
 
-export function enhancedCMUHyphenation(word: string, cmuPron: string): {
+export function enhancedCMUHyphenation(word: string, cmuPron: string, options: HyphenationOptions = {}): {
   hyphenated: string;
   boundaries: number[];
   pronunciation: string;
 } | null {
+  const { delimiter = '-' } = options;
+  
   if (!cmuPron) return null;
 
   const phonemes = cmuPron.split(/\s+/);
   const boundaries = getCMUBoundaries(word, phonemes);
-  const hyphenated = applyHyphenation(word, boundaries);
+  const hyphenated = applyHyphenation(word, boundaries, delimiter);
 
   return { hyphenated, boundaries, pronunciation: cmuPron };
 }

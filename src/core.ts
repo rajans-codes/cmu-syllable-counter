@@ -1,19 +1,9 @@
-// Core syllable counting functionality - minimal bundle
-export { fallbackSyllableCount } from './fallback';
 export { cmuDictionary } from './dictionary';
 export { syllableCounter, SyllableCounter } from './syllable-counter';
 
 // Core types
 export type { 
-  SyllableCountOptions, 
-  CMUDictEntry, 
-  SyllableInfo, 
-  HyphenationOptions,
-  HyphenationPattern,
-  SmartHyphenationOptions,
-  SmartHyphenationResult,
-  CMUHyphenationResult,
-  HyphenationStats
+  SyllableInfo
 } from './types';
 
 // Core convenience functions
@@ -31,12 +21,18 @@ export async function getSyllableCount(
     includeHyp?: boolean; // default: false
     delimiter?: string;   // default: '-'
     includePron?: boolean; // default: false - include pronunciation if word is in CMU dictionary
+    includeDetails?: boolean; // default: false - include additional statistics
   }
 ): Promise<{
   totalSyllableCount: number;
   hyp?: { hyp: string; sc: number; source: 'cmu' | 'fallback'; pron?: string }[];
+  details?: {
+    totalWords: number;
+    averagePerWord: number;
+    lines: number;
+  };
 }> {
-  const { includeHyp = false, delimiter = '-', includePron = false } = options || {};
+  const { includeHyp = false, delimiter = '-', includePron = false, includeDetails = false } = options || {};
   
   // Convert input to array of words
   let words: string[];
@@ -58,12 +54,27 @@ export async function getSyllableCount(
   if (words.length === 0) {
     return {
       totalSyllableCount: 0,
-      hyp: includeHyp ? [] : undefined
+      hyp: includeHyp ? [] : undefined,
+      details: includeDetails ? {
+        totalWords: 0,
+        averagePerWord: 0,
+        lines: 0
+      } : undefined
     };
   }
 
   let totalSyllableCount = 0;
   const hypData: { hyp: string; sc: number; source: 'cmu' | 'fallback'; pron?: string }[] = [];
+  
+  // Calculate lines for details
+  let lines = 0;
+  if (includeDetails) {
+    if (typeof wordsOrSentences === 'string') {
+      lines = wordsOrSentences.split('\n').filter(line => line.trim().length > 0).length;
+    } else {
+      lines = wordsOrSentences.length;
+    }
+  }
 
   // Process each word
   for (const word of words) {
@@ -104,27 +115,16 @@ export async function getSyllableCount(
 
   return {
     totalSyllableCount,
-    hyp: includeHyp ? hypData : undefined
+    hyp: includeHyp ? hypData : undefined,
+    details: includeDetails ? {
+      totalWords: words.length,
+      averagePerWord: words.length > 0 ? totalSyllableCount / words.length : 0,
+      lines
+    } : undefined
   };
-}
-
-/**
- * Check if a word is in the CMU dictionary
- */
-export async function isInDictionary(word: string): Promise<boolean> {
-  return await syllableCounter.isInDictionary(word);
-}
-
-/**
- * Get pronunciation for a word
- */
-export async function getPronunciation(word: string): Promise<string | null> {
-  return await syllableCounter.getPronunciation(word);
 }
 
 // Default export for CommonJS compatibility
 export default {
-  getSyllableCount,
-  isInDictionary,
-  getPronunciation
+  getSyllableCount
 };
