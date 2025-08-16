@@ -1,11 +1,25 @@
-import { CMU_DICTIONARY } from './dictionary-data';
+import { CMU_DICTIONARY } from "./dictionary-data";
 
 // ARPAbet vowel phonemes that indicate syllables
 const ARPABET_VOWELS = new Set([
-  'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'
+  "AA",
+  "AE",
+  "AH",
+  "AO",
+  "AW",
+  "AY",
+  "EH",
+  "ER",
+  "EY",
+  "IH",
+  "IY",
+  "OW",
+  "OY",
+  "UH",
+  "UW",
 ]);
 
-const DIGRAPHS = ['th', 'sh', 'ch', 'ph', 'gh', 'wh'];
+const DIGRAPHS = ["th", "sh", "ch", "ph", "gh", "wh"];
 
 // Vowel patterns for fallback syllable counting
 const VOWEL_PATTERNS = /[aeiouy]+/gi;
@@ -17,7 +31,7 @@ class CMUDictionary {
   async getPronunciation(word: string): Promise<string | null> {
     const normalizedWord = word.toLowerCase();
     const data = CMU_DICTIONARY[normalizedWord];
-    return data ? data.p : null;
+    return data?.p ?? null;
   }
 
   /**
@@ -26,7 +40,7 @@ class CMUDictionary {
   async getSyllableCount(word: string): Promise<number> {
     const normalizedWord = word.toLowerCase();
     const data = CMU_DICTIONARY[normalizedWord];
-    return data ? data.s : 0;
+    return data?.s ?? 0;
   }
 
   /**
@@ -34,7 +48,7 @@ class CMUDictionary {
    */
   async hasWord(word: string): Promise<boolean> {
     const normalizedWord = word.toLowerCase();
-    return CMU_DICTIONARY[normalizedWord] !== undefined;
+    return normalizedWord in CMU_DICTIONARY;
   }
 
   /**
@@ -42,7 +56,7 @@ class CMUDictionary {
    */
   getStats(): { totalWords: number } {
     return {
-      totalWords: Object.keys(CMU_DICTIONARY).length
+      totalWords: Object.keys(CMU_DICTIONARY).length,
     };
   }
 }

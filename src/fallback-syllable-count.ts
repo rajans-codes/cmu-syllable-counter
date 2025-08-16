@@ -1,4 +1,4 @@
-import { VOWEL_PATTERNS } from './dictionary';
+import { VOWEL_PATTERNS } from "./dictionary";
 
 /**
  * Advanced fallback syllable counter
@@ -8,10 +8,16 @@ export function enhancedFallbackSyllableCount(word: string): number {
   if (!word || word.length === 0) return 0;
 
   // Check if it's a sentence (contains spaces)
-  if (word.includes(' ')) {
-    const words = word.split(' ');
-    return words.reduce((total, w) => total + enhancedFallbackSyllableCount(w), 0);
+  if (word.includes(" ")) {
+    const words = word.split(" ");
+    return words.reduce(
+      (total, w) => total + enhancedFallbackSyllableCount(w),
+      0,
+    );
   }
+
+  // Early return for very short words
+  if (word.length <= 2) return 1;
 
   const lowerWord = word.toLowerCase();
 
@@ -31,9 +37,12 @@ export function enhancedFallbackSyllableCount(word: string): number {
   let processedWord = lowerWord;
 
   // Remove only safe suffixes (don’t over-trim short words like "sing")
-  processedWord = processedWord.replace(/(ingly|edly|ness|ment|ship|less|ful|ous|able|ible|tion|sion)$/, '');
-  processedWord = processedWord.replace(/(ing|ed|ly|er|est)$/, match =>
-    processedWord.length > match.length + 2 ? '' : match
+  processedWord = processedWord.replace(
+    /(ingly|edly|ness|ment|ship|less|ful|ous|able|ible|tion|sion)$/,
+    "",
+  );
+  processedWord = processedWord.replace(/(ing|ed|ly|er|est)$/, (match) =>
+    processedWord.length > match.length + 2 ? "" : match,
   );
 
   // Count vowel groups
@@ -46,7 +55,11 @@ export function enhancedFallbackSyllableCount(word: string): number {
   }
 
   // Silent 'e' at end (but only if not part of "ee" or "oe")
-  if (processedWord.endsWith('e') && !processedWord.match(/(ee|oe)$/) && syllableCount > 1) {
+  if (
+    processedWord.endsWith("e") &&
+    !processedWord.match(/(ee|oe)$/) &&
+    syllableCount > 1
+  ) {
     syllableCount--;
   }
 
@@ -70,7 +83,7 @@ export function enhancedFallbackSyllableCount(word: string): number {
     /every(one|thing|where)/,
     /some(one|thing|where|body)/,
     /any(one|thing|where|body)/,
-    /no(one|thing|where|body)/
+    /no(one|thing|where|body)/,
   ];
   for (const pattern of compoundPatterns) {
     if (pattern.test(processedWord)) {

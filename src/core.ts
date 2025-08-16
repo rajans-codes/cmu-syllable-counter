@@ -1,13 +1,42 @@
-export { cmuDictionary } from './dictionary';
-export { syllableCounter, SyllableCounter } from './syllable-counter';
+export { cmuDictionary } from "./dictionary";
+export { syllableCounter, SyllableCounter } from "./syllable-counter";
 
 // Core types
-export type { 
-  SyllableInfo
-} from './types';
+export type { SyllableInfo } from "./types";
 
 // Core convenience functions
-import { syllableCounter } from './syllable-counter';
+import { syllableCounter } from "./syllable-counter";
+
+// Pre-compiled regex for better performance
+const WORD_REGEX = /\b[\w']+\b/g;
+
+// Type definitions
+interface WordDetail {
+  word: string;
+  hyp: string;
+  sc: number;
+  source: "cmu" | "fallback";
+  pron?: string;
+}
+
+interface Analysis {
+  totalWords: number;
+  avgSyllablesPerWord: number;
+  lines: number;
+}
+
+interface SyllableCountResult {
+  totalSyllableCount: number;
+  wordDetails?: WordDetail[];
+  analysis?: Analysis;
+}
+
+interface SyllableCountOptions {
+  includeHyp?: boolean;
+  delimiter?: string;
+  includePron?: boolean;
+  includeAnalysis?: boolean;
+}
 
 /**
  * Unified syllable counting function for words or sentences
@@ -17,114 +46,144 @@ import { syllableCounter } from './syllable-counter';
  */
 export async function getSyllableCount(
   wordsOrSentences: string | string[],
-  options?: {
-    includeHyp?: boolean; // default: false
-    delimiter?: string;   // default: '-'
-    includePron?: boolean; // default: false - include pronunciation if word is in CMU dictionary
-    includeDetails?: boolean; // default: false - include additional statistics
-  }
-): Promise<{
-  totalSyllableCount: number;
-  hyp?: { hyp: string; sc: number; source: 'cmu' | 'fallback'; pron?: string }[];
-  details?: {
-    totalWords: number;
-    averagePerWord: number;
-    lines: number;
-  };
-}> {
-  const { includeHyp = false, delimiter = '-', includePron = false, includeDetails = false } = options || {};
-  
-  // Convert input to array of words
-  let words: string[];
-  if (typeof wordsOrSentences === 'string') {
-    // Split sentence into words
-    const wordRegex = /\b[\w']+\b/g;
-    words = wordsOrSentences.match(wordRegex) || [];
-  } else {
-    // Already an array
-    words = wordsOrSentences.flatMap(item => {
-      if (typeof item === 'string') {
-        const wordRegex = /\b[\w']+\b/g;
-        return item.match(wordRegex) || [];
-      }
-      return [];
-    });
-  }
+  options: SyllableCountOptions = {}
+): Promise<SyllableCountResult> {
+  const {
+    includeHyp = false,
+    delimiter = "-",
+    includePron = false,
+    includeAnalysis = false,
+  } = options;
 
-  if (words.length === 0) {
+  // Early return for empty input
+  if (!wordsOrSentences || 
+      (typeof wordsOrSentences === "string" && !wordsOrSentences.trim()) ||
+      (Array.isArray(wordsOrSentences) && wordsOrSentences.length === 0)) {
     return {
       totalSyllableCount: 0,
-      hyp: includeHyp ? [] : undefined,
-      details: includeDetails ? {
-        totalWords: 0,
-        averagePerWord: 0,
-        lines: 0
-      } : undefined
+      ...(includeHyp && { wordDetails: [] }),
+      ...(includeAnalysis && { 
+        analysis: { totalWords: 0, avgSyllablesPerWord: 0, lines: 0 } 
+      })
     };
   }
 
-  let totalSyllableCount = 0;
-  const hypData: { hyp: string; sc: number; source: 'cmu' | 'fallback'; pron?: string }[] = [];
+  // Extract words efficiently
+  const words = extractWords(wordsOrSentences);
   
-  // Calculate lines for details
-  let lines = 0;
-  if (includeDetails) {
-    if (typeof wordsOrSentences === 'string') {
-      lines = wordsOrSentences.split('\n').filter(line => line.trim().length > 0).length;
-    } else {
-      lines = wordsOrSentences.length;
-    }
+  if (words.length === 0) {
+    return {
+      totalSyllableCount: 0,
+      ...(includeHyp && { wordDetails: [] }),
+      ...(includeAnalysis && { 
+        analysis: { totalWords: 0, avgSyllablesPerWord: 0, lines: 0 } 
+      })
+    };
   }
 
-  // Process each word
-  for (const word of words) {
-    if (!word || word.length === 0) continue;
+  // Calculate lines for analysis (only if needed)
+  const lines = includeAnalysis ? calculateLines(wordsOrSentences) : 0;
 
-    const normalizedWord = word.trim();
-    
-    // Get syllable info for the word
-    const syllableInfo = await syllableCounter.getSyllableInfo(normalizedWord, {
-      includeBoundaries: includeHyp
-    });
+  // Process words
+  const { totalSyllableCount, wordDetails } = await processWords(
+    words, 
+    { includeHyp, delimiter, includePron }
+  );
 
-    totalSyllableCount += syllableInfo.syllables;
-
-    // Add hyphenation data if requested
-    if (includeHyp) {
-      let hyphenated = syllableInfo.hyphenated;
-      
-      // Replace default hyphen with custom delimiter if different
-      if (delimiter !== '-') {
-        hyphenated = hyphenated.replace(/-/g, delimiter);
-      }
-
-      const wordData: { hyp: string; sc: number; source: 'cmu' | 'fallback'; pron?: string } = {
-        hyp: hyphenated,
-        sc: syllableInfo.syllables,
-        source: syllableInfo.source
-      };
-
-      // Add pronunciation if requested and available
-      if (includePron && syllableInfo.pronunciation) {
-        wordData.pron = syllableInfo.pronunciation;
-      }
-
-      hypData.push(wordData);
-    }
-  }
-
+  // Build result object efficiently
   return {
     totalSyllableCount,
-    hyp: includeHyp ? hypData : undefined,
-    details: includeDetails ? {
-      totalWords: words.length,
-      averagePerWord: words.length > 0 ? totalSyllableCount / words.length : 0,
-      lines
-    } : undefined
+    ...(includeHyp && { wordDetails }),
+    ...(includeAnalysis && { 
+      analysis: {
+        totalWords: words.length,
+        avgSyllablesPerWord: words.length > 0 ? totalSyllableCount / words.length : 0,
+        lines
+      }
+    })
   };
+}
+
+/**
+ * Extract words from input efficiently
+ */
+function extractWords(input: string | string[]): string[] {
+  if (typeof input === "string") {
+    return input.match(WORD_REGEX) || [];
+  }
+  
+  return input.flatMap(item => 
+    typeof item === "string" ? (item.match(WORD_REGEX) || []) : []
+  );
+}
+
+/**
+ * Calculate number of lines for analysis
+ */
+function calculateLines(input: string | string[]): number {
+  if (typeof input === "string") {
+    return input.split("\n").filter(line => line.trim().length > 0).length;
+  }
+  return input.length;
+}
+
+/**
+ * Process words and return syllable count and details
+ */
+async function processWords(
+  words: string[], 
+  options: { includeHyp: boolean; delimiter: string; includePron: boolean }
+): Promise<{ totalSyllableCount: number; wordDetails: WordDetail[] }> {
+  const { includeHyp, delimiter, includePron } = options;
+  
+  // Filter out empty words first
+  const validWords = words.filter(word => word?.trim());
+  
+  if (validWords.length === 0) {
+    return { totalSyllableCount: 0, wordDetails: [] };
+  }
+
+  // Process words in parallel for better performance
+  const syllableInfos = await Promise.all(
+    validWords.map(async (word) => {
+      const normalizedWord = word.trim();
+      
+      // Pass all options including delimiter to underlying function
+      const syllableInfo = await syllableCounter.getSyllableInfo(normalizedWord, {
+        includeBoundaries: includeHyp,
+        delimiter, // Pass delimiter to underlying functions
+      });
+
+      return { normalizedWord, syllableInfo };
+    })
+  );
+
+  // Calculate totals and build word details
+  let totalSyllableCount = 0;
+  const wordDetails: WordDetail[] = [];
+
+  for (const { normalizedWord, syllableInfo } of syllableInfos) {
+    totalSyllableCount += syllableInfo.syllables;
+
+    if (includeHyp) {
+      const wordDetail: WordDetail = {
+        word: normalizedWord,
+        hyp: syllableInfo.hyphenated, // Already uses correct delimiter
+        sc: syllableInfo.syllables,
+        source: syllableInfo.source,
+        ...(includePron && syllableInfo.pronunciation && { 
+          pron: syllableInfo.pronunciation 
+        })
+      };
+
+      wordDetails.push(wordDetail);
+    }
+  }
+
+  return { totalSyllableCount, wordDetails };
 }
 
 // Default export for CommonJS compatibility
 export default {
-  getSyllableCount
+  getSyllableCount,
 };

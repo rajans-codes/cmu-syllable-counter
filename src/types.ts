@@ -6,7 +6,7 @@ export interface SyllableInfo {
   /** Hyphenated version of the word */
   hyphenated: string;
   /** Source of the syllable count: 'cmu' or 'fallback' */
-  source: 'cmu' | 'fallback';
+  source: "cmu" | "fallback";
   /** CMU pronunciation if available */
   pronunciation?: string;
   /** Syllable boundaries for advanced analysis */
