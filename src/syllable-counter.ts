@@ -69,7 +69,22 @@ export class SyllableCounter {
     word: string, 
     options: SyllableCountOptions & HyphenationOptions
   ): Promise<SyllableInfo> {
-    // Try CMU Dictionary first
+    // Check for hyphenated version first
+    const hyphenated = await cmuDictionary.getHyphenated(word);
+    
+    if (hyphenated) {
+      // Return the hyphenated version directly
+      return {
+        word,
+        syllables: await cmuDictionary.getSyllableCount(word),
+        hyphenated,
+        source: "cmu",
+        pronunciation: await cmuDictionary.getPronunciation(word) || undefined,
+        syllableBoundaries: options.includeBoundaries ? this.getSyllableBoundariesFromHyphenated(hyphenated) : undefined,
+      };
+    }
+    
+    // Try CMU Dictionary for pronunciation
     const pronunciation = await cmuDictionary.getPronunciation(word);
     
     if (pronunciation) {
@@ -146,6 +161,24 @@ export class SyllableCounter {
       source: "fallback",
       syllableBoundaries: [],
     };
+  }
+
+  /**
+   * Get syllable boundaries from a hyphenated string
+   */
+  private getSyllableBoundariesFromHyphenated(hyphenated: string): number[] {
+    const boundaries: number[] = [];
+    let currentPos = 0;
+    
+    for (let i = 0; i < hyphenated.length; i++) {
+      if (hyphenated[i] === '-') {
+        boundaries.push(currentPos);
+      } else {
+        currentPos++;
+      }
+    }
+    
+    return boundaries;
   }
 
   /**

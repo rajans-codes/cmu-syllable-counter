@@ -44,6 +44,15 @@ class CMUDictionary {
   }
 
   /**
+   * Get hyphenated version for a word from the dictionary
+   */
+  async getHyphenated(word: string): Promise<string | null> {
+    const normalizedWord = word.toLowerCase();
+    const data = CMU_DICTIONARY[normalizedWord];
+    return data?.h ?? null;
+  }
+
+  /**
    * Check if a word exists in the dictionary
    */
   async hasWord(word: string): Promise<boolean> {
