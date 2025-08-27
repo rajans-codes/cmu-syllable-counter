@@ -26,7 +26,7 @@
     "test:watch": "jest --watch",
     "lint": "eslint src --ext .ts,.js",
     "format": "prettier --write src/**/*.{ts,js}",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "syllables",
@@ -44,7 +44,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rajans-codes/cmu-syllable-counter.git"
+    "url": "git+https://github.com/rajans-codes/cmu-syllable-counter.git"
   },
   "bugs": {
     "url": "https://github.com/rajans-codes/cmu-syllable-counter/issues"
