@@ -4,15 +4,36 @@ import {
   enhancedHyphenateWord,
   getSyllableBoundaries,
 } from "./fallback-hyphenation";
-import { enhancedCMUHyphenation } from "./cmu-hyphenation";
-import type {
-  SyllableInfo,
-  SyllableCountOptions,
-  HyphenationOptions,
-} from "./types";
 
-// Pre-compiled regex for better performance
-const WORD_REGEX = /\b[\w']+\b/g;
+// Type definitions moved from types.ts
+export interface SyllableInfo {
+  /** The original word */
+  word: string;
+  /** Number of syllables */
+  syllables: number;
+  /** Hyphenated version of the word */
+  hyphenated: string;
+  /** Source of the syllable count: 'cmu' or 'fallback' */
+  source: "cmu" | "fallback";
+  /** CMU pronunciation if available */
+  pronunciation?: string;
+  /** Syllable boundaries for advanced analysis */
+  syllableBoundaries?: number[];
+}
+
+export interface SyllableCountOptions {
+  /** Whether to include syllable boundaries in the result */
+  includeBoundaries?: boolean;
+}
+
+export interface HyphenationOptions {
+  /** Whether to include syllable boundaries */
+  includeBoundaries?: boolean;
+  /** Custom hyphenation patterns */
+  customPatterns?: Record<string, string>;
+  /** Delimiter to use for hyphenation (default: '-') */
+  delimiter?: string;
+}
 
 // Cache entry with timestamp for true LRU
 interface CacheEntry {
@@ -27,7 +48,6 @@ interface CacheEntry {
 export class SyllableCounter {
   private cache: Map<string, CacheEntry> = new Map();
   private maxCacheSize: number;
-  private readonly DEFAULT_CACHE_SIZE = 1000;
 
   constructor(maxCacheSize: number = 1000) {
     this.maxCacheSize = maxCacheSize;
@@ -69,65 +89,36 @@ export class SyllableCounter {
     word: string, 
     options: SyllableCountOptions & HyphenationOptions
   ): Promise<SyllableInfo> {
-    // Check for hyphenated version first
-    const hyphenated = await cmuDictionary.getHyphenated(word);
+    // First, check if word exists in dictionary using the optimized getWord method
+    const dictionaryEntry = cmuDictionary.getWord(word);
     
-    if (hyphenated) {
-      // Return the hyphenated version directly
+    if (dictionaryEntry) {
+      // Word found in dictionary - return immediately with all data
+      let hyphenated: string;
+      if (dictionaryEntry.h) {
+        // Convert dictionary hyphenation to use custom delimiter
+        const customDelimiter = options.delimiter || '-';
+        hyphenated = dictionaryEntry.h.replace(/-/g, customDelimiter);
+      } else {
+        hyphenated = enhancedHyphenateWord(word, options);
+      }
+      
+      const boundaries = dictionaryEntry.h 
+        ? this.getSyllableBoundariesFromHyphenated(dictionaryEntry.h, options.delimiter || '-')
+        : getSyllableBoundaries(word, options);
+
       return {
         word,
-        syllables: await cmuDictionary.getSyllableCount(word),
+        syllables: dictionaryEntry.s,
         hyphenated,
         source: "cmu",
-        pronunciation: await cmuDictionary.getPronunciation(word) || undefined,
-        syllableBoundaries: options.includeBoundaries ? this.getSyllableBoundariesFromHyphenated(hyphenated) : undefined,
+        pronunciation: dictionaryEntry.p,
+        syllableBoundaries: options.includeBoundaries ? boundaries : undefined,
       };
     }
     
-    // Try CMU Dictionary for pronunciation
-    const pronunciation = await cmuDictionary.getPronunciation(word);
-    
-    if (pronunciation) {
-      return this.processWithCMU(word, pronunciation, options);
-    }
-    
-    // Use fallback algorithm
+    // Word not found in dictionary - use fallback algorithm
     return this.processWithFallback(word, options);
-  }
-
-  /**
-   * Process word using CMU dictionary data
-   */
-  private async processWithCMU(
-    word: string,
-    pronunciation: string,
-    options: SyllableCountOptions & HyphenationOptions
-  ): Promise<SyllableInfo> {
-    const syllableCount = await cmuDictionary.getSyllableCount(word);
-    
-    // Try CMU-based hyphenation first
-    const cmuHyphenationResult = enhancedCMUHyphenation(word, pronunciation, options);
-    
-    let hyphenated: string;
-    let boundaries: number[];
-
-    if (cmuHyphenationResult) {
-      hyphenated = cmuHyphenationResult.hyphenated;
-      boundaries = cmuHyphenationResult.boundaries;
-    } else {
-      // Fall back to pattern-based hyphenation
-      hyphenated = enhancedHyphenateWord(word, options);
-      boundaries = getSyllableBoundaries(word);
-    }
-
-    return {
-      word,
-      syllables: syllableCount,
-      hyphenated,
-      source: "cmu",
-      pronunciation,
-      syllableBoundaries: options.includeBoundaries ? boundaries : undefined,
-    };
   }
 
   /**
@@ -166,12 +157,12 @@ export class SyllableCounter {
   /**
    * Get syllable boundaries from a hyphenated string
    */
-  private getSyllableBoundariesFromHyphenated(hyphenated: string): number[] {
+  private getSyllableBoundariesFromHyphenated(hyphenated: string, delimiter: string = '-'): number[] {
     const boundaries: number[] = [];
     let currentPos = 0;
     
     for (let i = 0; i < hyphenated.length; i++) {
-      if (hyphenated[i] === '-') {
+      if (hyphenated[i] === delimiter) {
         boundaries.push(currentPos);
       } else {
         currentPos++;
@@ -244,7 +235,6 @@ export class SyllableCounter {
   getCacheStats(): { 
     size: number; 
     maxSize: number; 
-    hitRate?: number;
     oldestEntry?: number;
   } {
     const stats = {
@@ -280,15 +270,6 @@ export class SyllableCounter {
     if (this.cache.size > size) {
       this.evictOldestEntries();
     }
-  }
-
-  /**
-   * Get cache hit rate (requires tracking hits/misses)
-   */
-  getCacheHitRate(): number | null {
-    // This would require additional tracking of hits/misses
-    // For now, return null to indicate not implemented
-    return null;
   }
 }
 

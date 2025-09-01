@@ -2,9 +2,9 @@ export { cmuDictionary } from "./dictionary";
 export { syllableCounter, SyllableCounter } from "./syllable-counter";
 
 // Core types
-export type { SyllableInfo } from "./types";
+export type { SyllableInfo } from "./syllable-counter";
 
-// Core convenience functions
+// Import syllableCounter for internal use
 import { syllableCounter } from "./syllable-counter";
 
 // Pre-compiled regex for better performance
@@ -38,6 +38,13 @@ interface SyllableCountOptions {
   includeAnalysis?: boolean;
 }
 
+// Empty result template for better performance
+const EMPTY_RESULT: SyllableCountResult = {
+  totalSyllableCount: 0,
+  wordDetails: [],
+  analysis: { totalWords: 0, avgSyllablesPerWord: 0, lines: 0 }
+};
+
 /**
  * Unified syllable counting function for words or sentences
  * @param wordsOrSentences - A single word, sentence, or an array of words/sentences
@@ -68,7 +75,7 @@ export async function getSyllableCount(
     };
   }
 
-  // Extract words efficiently
+  // Extract and filter words efficiently
   const words = extractWords(wordsOrSentences);
   
   if (words.length === 0) {
@@ -109,12 +116,25 @@ export async function getSyllableCount(
  */
 function extractWords(input: string | string[]): string[] {
   if (typeof input === "string") {
-    return input.match(WORD_REGEX) || [];
+    const matches = input.match(WORD_REGEX);
+    return matches ? matches.filter(word => word.trim()) : [];
   }
   
-  return input.flatMap(item => 
-    typeof item === "string" ? (item.match(WORD_REGEX) || []) : []
-  );
+  // Handle array input more efficiently
+  const result: string[] = [];
+  for (const item of input) {
+    if (typeof item === "string") {
+      const matches = item.match(WORD_REGEX);
+      if (matches) {
+        for (const word of matches) {
+          if (word.trim()) {
+            result.push(word);
+          }
+        }
+      }
+    }
+  }
+  return result;
 }
 
 /**
@@ -136,22 +156,18 @@ async function processWords(
 ): Promise<{ totalSyllableCount: number; wordDetails: WordDetail[] }> {
   const { includeHyp, delimiter, includePron } = options;
   
-  // Filter out empty words first
-  const validWords = words.filter(word => word?.trim());
-  
-  if (validWords.length === 0) {
+  if (words.length === 0) {
     return { totalSyllableCount: 0, wordDetails: [] };
   }
 
   // Process words in parallel for better performance
   const syllableInfos = await Promise.all(
-    validWords.map(async (word) => {
+    words.map(async (word) => {
       const normalizedWord = word.trim();
       
-      // Pass all options including delimiter to underlying function
       const syllableInfo = await syllableCounter.getSyllableInfo(normalizedWord, {
         includeBoundaries: includeHyp,
-        delimiter, // Pass delimiter to underlying functions
+        delimiter,
       });
 
       return { normalizedWord, syllableInfo };
@@ -168,7 +184,7 @@ async function processWords(
     if (includeHyp) {
       const wordDetail: WordDetail = {
         word: normalizedWord,
-        hyp: syllableInfo.hyphenated, // Already uses correct delimiter
+        hyp: syllableInfo.hyphenated,
         sc: syllableInfo.syllables,
         source: syllableInfo.source,
         ...(includePron && syllableInfo.pronunciation && { 

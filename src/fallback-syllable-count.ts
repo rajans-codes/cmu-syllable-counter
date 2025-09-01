@@ -1,5 +1,40 @@
 import { VOWEL_PATTERNS } from "./dictionary";
 
+// Pre-compiled regex patterns for better performance
+const SILENT_E_PATTERN = /(ee|oe)$/;
+const CONSONANT_LE_PATTERN = /[bcdfghjklmnpqrstvwxyz]le$/;
+const TION_SION_PATTERN = /(tion|sion)$/;
+const IOUS_PATTERN = /ious$/;
+const Y_AS_VOWEL_PATTERN = /[bcdfghjklmnpqrstvwxz]y/;
+
+// Compound word patterns
+const COMPOUND_PATTERNS = [
+  /every(one|thing|where)/,
+  /some(one|thing|where|body)/,
+  /any(one|thing|where|body)/,
+  /no(one|thing|where|body)/,
+];
+
+// Irregular / exception cases
+const EXCEPTIONS: Record<string, number> = {
+  choir: 2,
+  colonel: 2,
+  business: 2,
+  one: 1,
+  two: 1,
+  once: 1,
+  done: 1,
+  queue: 1,
+  beautiful: 3,
+  computer: 3,
+  action: 2,
+  vision: 2,
+  nation: 2,
+  curious: 3,
+  serious: 3,
+  table: 2,
+};
+
 /**
  * Advanced fallback syllable counter
  * Tries to approximate English syllables when dictionary lookup fails
@@ -21,75 +56,48 @@ export function enhancedFallbackSyllableCount(word: string): number {
 
   const lowerWord = word.toLowerCase();
 
-  // Irregular / exception cases
-  const exceptions: Record<string, number> = {
-    choir: 2,
-    colonel: 2,
-    business: 2,
-    one: 1,
-    two: 1,
-    once: 1,
-    done: 1,
-    queue: 1,
-  };
-  if (exceptions[lowerWord] !== undefined) return exceptions[lowerWord];
+  // Check exceptions first
+  if (EXCEPTIONS[lowerWord] !== undefined) return EXCEPTIONS[lowerWord];
 
-  let processedWord = lowerWord;
-
-  // Remove only safe suffixes (don’t over-trim short words like "sing")
-  processedWord = processedWord.replace(
-    /(ingly|edly|ness|ment|ship|less|ful|ous|able|ible|tion|sion)$/,
-    "",
-  );
-  processedWord = processedWord.replace(/(ing|ed|ly|er|est)$/, (match) =>
-    processedWord.length > match.length + 2 ? "" : match,
-  );
-
-  // Count vowel groups
-  const vowelMatches = processedWord.match(VOWEL_PATTERNS);
+  // Count vowel groups first (before suffix removal)
+  const vowelMatches = lowerWord.match(VOWEL_PATTERNS);
   let syllableCount = vowelMatches ? vowelMatches.length : 0;
 
   // Handle 'y' as vowel if no standard vowels
-  if (!vowelMatches && /[bcdfghjklmnpqrstvwxz]y/.test(processedWord)) {
+  if (!vowelMatches && Y_AS_VOWEL_PATTERN.test(lowerWord)) {
     syllableCount++;
   }
 
-  // Silent 'e' at end (but only if not part of "ee" or "oe")
-  if (
-    processedWord.endsWith("e") &&
-    !processedWord.match(/(ee|oe)$/) &&
-    syllableCount > 1
-  ) {
-    syllableCount--;
+  // Handle compound words
+  for (const pattern of COMPOUND_PATTERNS) {
+    if (pattern.test(lowerWord)) {
+      syllableCount = Math.max(syllableCount, 3);
+      break;
+    }
+  }
+
+  // Handle "-ious" (often two syllables: "curious" → 3)
+  if (IOUS_PATTERN.test(lowerWord)) {
+    syllableCount++;
   }
 
   // Handle words ending in consonant + "le" (e.g. "bottle", "little")
-  if (processedWord.match(/[bcdfghjklmnpqrstvwxyz]le$/)) {
+  if (CONSONANT_LE_PATTERN.test(lowerWord)) {
     syllableCount++;
   }
 
   // Handle "-tion", "-sion" (usually one syllable)
-  if (processedWord.match(/(tion|sion)$/)) {
+  if (TION_SION_PATTERN.test(lowerWord)) {
     syllableCount = Math.max(1, syllableCount - 1);
   }
 
-  // Handle "-ious" (often two syllables: "curious" → 3)
-  if (processedWord.match(/ious$/)) {
-    syllableCount++;
-  }
-
-  // Compound words
-  const compoundPatterns = [
-    /every(one|thing|where)/,
-    /some(one|thing|where|body)/,
-    /any(one|thing|where|body)/,
-    /no(one|thing|where|body)/,
-  ];
-  for (const pattern of compoundPatterns) {
-    if (pattern.test(processedWord)) {
-      syllableCount = Math.max(syllableCount, 3);
-      break;
-    }
+  // Silent 'e' at end (but only if not part of "ee" or "oe")
+  if (
+    lowerWord.endsWith("e") &&
+    !SILENT_E_PATTERN.test(lowerWord) &&
+    syllableCount > 1
+  ) {
+    syllableCount--;
   }
 
   return Math.max(1, syllableCount);
