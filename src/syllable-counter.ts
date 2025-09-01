@@ -67,19 +67,49 @@ export class SyllableCounter {
 
     const normalizedWord = word.trim();
 
+    // Create cache key that excludes delimiter (since it doesn't affect core data)
+    const cacheKey = this.createCacheKey(normalizedWord, options);
+
     // Check cache first
-    const cached = this.getFromCache(normalizedWord);
+    const cached = this.getFromCache(cacheKey);
     if (cached) {
-      return cached;
+      // Apply delimiter transformation to cached result
+      return this.applyDelimiterToResult(cached, options.delimiter);
     }
 
     // Process the word
     const info = await this.processWord(normalizedWord, options);
     
-    // Cache the result
-    this.cacheResult(normalizedWord, info);
+    // Cache the result (with default delimiter)
+    this.cacheResult(cacheKey, info);
     
-    return info;
+    // Apply delimiter transformation to result
+    return this.applyDelimiterToResult(info, options.delimiter);
+  }
+
+  /**
+   * Create a cache key that excludes delimiter (since it doesn't affect core data)
+   */
+  private createCacheKey(word: string, options: SyllableCountOptions & HyphenationOptions): string {
+    const includeBoundaries = options.includeBoundaries || false;
+    return `${word}|${includeBoundaries}`;
+  }
+
+  /**
+   * Apply delimiter transformation to a result
+   */
+  private applyDelimiterToResult(info: SyllableInfo, delimiter?: string): SyllableInfo {
+    if (!delimiter || delimiter === '-') {
+      return info; // No transformation needed
+    }
+
+    // Apply delimiter transformation to hyphenated word
+    const transformedHyphenated = info.hyphenated.replace(/-/g, delimiter);
+
+    return {
+      ...info,
+      hyphenated: transformedHyphenated
+    };
   }
 
   /**
@@ -94,18 +124,12 @@ export class SyllableCounter {
     
     if (dictionaryEntry) {
       // Word found in dictionary - return immediately with all data
-      let hyphenated: string;
-      if (dictionaryEntry.h) {
-        // Convert dictionary hyphenation to use custom delimiter
-        const customDelimiter = options.delimiter || '-';
-        hyphenated = dictionaryEntry.h.replace(/-/g, customDelimiter);
-      } else {
-        hyphenated = enhancedHyphenateWord(word, options);
-      }
+      // Always use default delimiter for caching, transformation will handle custom delimiters
+      const hyphenated = dictionaryEntry.h || enhancedHyphenateWord(word, { ...options, delimiter: '-' });
       
       const boundaries = dictionaryEntry.h 
-        ? this.getSyllableBoundariesFromHyphenated(dictionaryEntry.h, options.delimiter || '-')
-        : getSyllableBoundaries(word, options);
+        ? this.getSyllableBoundariesFromHyphenated(dictionaryEntry.h, '-')
+        : getSyllableBoundaries(word, { ...options, delimiter: '-' });
 
       return {
         word,
@@ -129,8 +153,9 @@ export class SyllableCounter {
     options: SyllableCountOptions & HyphenationOptions
   ): SyllableInfo {
     const fallbackCount = enhancedFallbackSyllableCount(word);
-    const hyphenated = enhancedHyphenateWord(word, options);
-    const boundaries = getSyllableBoundaries(word);
+    // Always use default delimiter for caching, transformation will handle custom delimiters
+    const hyphenated = enhancedHyphenateWord(word, { ...options, delimiter: '-' });
+    const boundaries = getSyllableBoundaries(word, { ...options, delimiter: '-' });
 
     return {
       word,
