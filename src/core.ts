@@ -1,11 +1,19 @@
 export { cmuDictionary } from "./dictionary";
 export { syllableCounter, SyllableCounter } from "./syllable-counter";
 
-// Core types
-export type { SyllableInfo } from "./syllable-counter";
+// Export types for external use
+export type { 
+  WordDetail, 
+  Analysis, 
+  SyllableCountResult, 
+  SyllableCountOptions, 
+  CoreHyphenationOptions, 
+  HyphenationResult 
+};
 
 // Import syllableCounter for internal use
 import { syllableCounter } from "./syllable-counter";
+import type { HyphenationOptions } from "./syllable-counter";
 
 // Pre-compiled regex for better performance
 const WORD_REGEX = /\b[\w']+\b/g;
@@ -36,6 +44,17 @@ interface SyllableCountOptions {
   delimiter?: string;
   includePron?: boolean;
   includeAnalysis?: boolean;
+}
+
+// Core-specific hyphenation options that extend the base ones
+interface CoreHyphenationOptions extends HyphenationOptions {
+  includeAnalysis?: boolean;
+}
+
+interface HyphenationResult {
+  hyp: string;
+  words: WordDetail[];
+  analysis?: Analysis;
 }
 
 // Empty result template for better performance
@@ -105,6 +124,73 @@ export async function getSyllableCount(
       analysis: {
         totalWords: words.length,
         avgSyllablesPerWord: words.length > 0 ? totalSyllableCount / words.length : 0,
+        lines
+      }
+    })
+  };
+}
+
+/**
+ * Get hyphenated string with word details
+ * @param wordsOrSentences - A single word, sentence, or an array of words/sentences
+ * @param options - Configuration options
+ * @returns Promise with hyphenated string and word details
+ */
+export async function getHyphenatedString(
+  wordsOrSentences: string | string[],
+  options: CoreHyphenationOptions = {}
+): Promise<HyphenationResult> {
+  const {
+    delimiter = "-",
+    includeAnalysis = false,
+  } = options;
+
+  // Early return for empty input
+  if (!wordsOrSentences || 
+      (typeof wordsOrSentences === "string" && !wordsOrSentences.trim()) ||
+      (Array.isArray(wordsOrSentences) && wordsOrSentences.length === 0)) {
+    return {
+      hyp: "",
+      words: [],
+      ...(includeAnalysis && { 
+        analysis: { totalWords: 0, avgSyllablesPerWord: 0, lines: 0 } 
+      })
+    };
+  }
+
+  // Extract and filter words efficiently
+  const words = extractWords(wordsOrSentences);
+  
+  if (words.length === 0) {
+    return {
+      hyp: "",
+      words: [],
+      ...(includeAnalysis && { 
+        analysis: { totalWords: 0, avgSyllablesPerWord: 0, lines: 0 } 
+      })
+    };
+  }
+
+  // Calculate lines for analysis (only if needed)
+  const lines = includeAnalysis ? calculateLines(wordsOrSentences) : 0;
+
+  // Process words with hyphenation enabled
+  const { wordDetails } = await processWords(
+    words, 
+    { includeHyp: true, delimiter, includePron: false }
+  );
+
+  // Build hyphenated string
+  const hyp = wordDetails.map(detail => detail.hyp).join(" ");
+
+  // Build result object efficiently
+  return {
+    hyp,
+    words: wordDetails,
+    ...(includeAnalysis && { 
+      analysis: {
+        totalWords: words.length,
+        avgSyllablesPerWord: wordDetails.reduce((sum, detail) => sum + detail.sc, 0) / words.length,
         lines
       }
     })
@@ -202,4 +288,5 @@ async function processWords(
 // Default export for CommonJS compatibility
 export default {
   getSyllableCount,
+  getHyphenatedString,
 };
