@@ -1,28 +1,7 @@
 import { CMU_DICTIONARY } from './dictionary-data';
 
-// ARPAbet vowel phonemes that indicate syllables
-const ARPABET_VOWELS = new Set([
-  "AA",
-  "AE",
-  "AH",
-  "AO",
-  "AW",
-  "AY",
-  "EH",
-  "ER",
-  "EY",
-  "IH",
-  "IY",
-  "OW",
-  "OY",
-  "UH",
-  "UW",
-]);
-
-const DIGRAPHS = ["th", "sh", "ch", "ph", "gh", "wh"];
-
-// Vowel patterns for fallback syllable counting
-const VOWEL_PATTERNS = /[aeiouy]+/gi;
+// Vowel patterns for fallback syllable counting (needed by fallback-syllable-count.ts)
+export const VOWEL_PATTERNS = /[aeiouy]+/gi;
 
 // Dictionary entry type for better type safety
 export interface DictionaryEntry {
@@ -136,6 +115,11 @@ export class CMUDictionary {
 
 // Utility functions for advanced dictionary operations
 
+// Pre-compiled regex patterns for better performance
+const STRESS_MARKER_REGEX = /\d/;
+const VOWEL_PHONEME_REGEX = /^[AEIOU]/i;
+const CONSONANT_PHONEME_REGEX = /^[BCDFGHJKLMNPQRSTVWXYZ]/i;
+
 /**
  * Count syllables from pronunciation string
  */
@@ -155,8 +139,8 @@ function countVowelsFromPronunciation(pronunciation: string): number {
   if (!pronunciation) return 0;
   const phonemes = pronunciation.split(' ');
   return phonemes.filter(phoneme => 
-    /^[AEIOU]/i.test(phoneme) || // Vowel phonemes
-    /[0-9]/.test(phoneme) // Stress markers
+    VOWEL_PHONEME_REGEX.test(phoneme) || // Vowel phonemes
+    STRESS_MARKER_REGEX.test(phoneme) // Stress markers
   ).length;
 }
 
@@ -167,8 +151,8 @@ function countConsonantsFromPronunciation(pronunciation: string): number {
   if (!pronunciation) return 0;
   const phonemes = pronunciation.split(' ');
   return phonemes.filter(phoneme => 
-    /^[BCDFGHJKLMNPQRSTVWXYZ]/i.test(phoneme) && // Consonant phonemes
-    !/[0-9]/.test(phoneme) // Exclude stress markers
+    CONSONANT_PHONEME_REGEX.test(phoneme) && // Consonant phonemes
+    !STRESS_MARKER_REGEX.test(phoneme) // Exclude stress markers
   ).length;
 }
 
@@ -242,16 +226,17 @@ export function findWordsBySyllableCount(
     if (data.s === syllableCount) {
       const analysis: WordAnalysis = { 
         word, 
-        syllables: data.s,
-        phonemeCount: data.p.split(' ').length,
-        vowelCount: countVowelsFromPronunciation(data.p),
-        consonantCount: countConsonantsFromPronunciation(data.p),
-        stressPattern: extractStressPattern(data.p),
-        complexity: determineComplexity(data.p)
+        syllables: data.s
       };
       
+      // Only calculate expensive properties if needed
       if (includePronunciation) {
         analysis.pronunciation = data.p;
+        analysis.phonemeCount = data.p.split(' ').length;
+        analysis.vowelCount = countVowelsFromPronunciation(data.p);
+        analysis.consonantCount = countConsonantsFromPronunciation(data.p);
+        analysis.stressPattern = extractStressPattern(data.p);
+        analysis.complexity = determineComplexity(data.p);
       }
       
       if (includeHyphenation && data.h) {
@@ -365,8 +350,16 @@ export function findWordsByVowelCount(
 export function getRandomWords(count: number = 10, options: WordSearchOptions = {}): WordAnalysis[] {
   const { includePronunciation = true, includeSyllables = true, includeHyphenation = true } = options;
   
-  const words = Object.keys(CMU_DICTIONARY);
-  const selectedWords = words.sort(() => Math.random() - 0.5).slice(0, count);
+  // Use cached words array for better performance
+  const words = ALL_WORDS_CACHE;
+  const wordCount = DICTIONARY_SIZE_CACHE;
+  
+  // Simple random selection - pick random indices
+  const selectedWords: string[] = [];
+  for (let i = 0; i < count && i < wordCount; i++) {
+    const randomIndex = Math.floor(Math.random() * wordCount);
+    selectedWords.push(words[randomIndex]);
+  }
   
   return selectedWords.map(word => {
     const data = CMU_DICTIONARY[word];
@@ -402,7 +395,7 @@ export function findRhymingWords(
   if (!targetData) return results;
   
   const targetPhonemes = targetData.p.split(' ');
-  const targetVowels = targetPhonemes.filter(p => /^[AEIOU]/i.test(p) || /\d/.test(p));
+  const targetVowels = targetPhonemes.filter(p => VOWEL_PHONEME_REGEX.test(p) || STRESS_MARKER_REGEX.test(p));
   
   if (targetVowels.length === 0) return results;
   
@@ -437,18 +430,21 @@ export function findRhymingWords(
   return results;
 }
 
+// Cache the words array for better performance
+const ALL_WORDS_CACHE = Object.keys(CMU_DICTIONARY);
+const DICTIONARY_SIZE_CACHE = ALL_WORDS_CACHE.length;
 /**
  * Get all words in dictionary
  */
 export function getAllWords(): string[] {
-  return Object.keys(CMU_DICTIONARY);
+  return ALL_WORDS_CACHE;
 }
 
 /**
  * Get total word count in dictionary
  */
 export function getDictionarySize(): number {
-  return Object.keys(CMU_DICTIONARY).length;
+  return DICTIONARY_SIZE_CACHE;
 }
 
 /**
@@ -460,4 +456,3 @@ export function isWordInDictionary(word: string): boolean {
 
 // Export singleton instance
 export const cmuDictionary = new CMUDictionary();
-export { ARPABET_VOWELS, VOWEL_PATTERNS, DIGRAPHS };

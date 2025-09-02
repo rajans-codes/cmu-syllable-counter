@@ -60,13 +60,6 @@ interface HyphenationResult {
   analysis?: Analysis;
 }
 
-// Empty result template for better performance
-const EMPTY_RESULT: SyllableCountResult = {
-  totalSyllableCount: 0,
-  wordDetails: [],
-  analysis: { totalWords: 0, avgSyllablesPerWord: 0, lines: 0 }
-};
-
 /**
  * Unified syllable counting function for words or sentences
  * @param wordsOrSentences - A single word, sentence, or an array of words/sentences
