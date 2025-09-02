@@ -28,7 +28,9 @@ const terserConfig = {
     drop_console: true,
     drop_debugger: true,
     pure_funcs: ['console.log', 'console.info', 'console.debug'],
-    passes: 2
+    passes: 2,
+    dead_code: true,
+    unused: true
   },
   mangle: {
     toplevel: true,
@@ -42,7 +44,7 @@ const terserConfig = {
 };
 
 export default [
-  // Main ES Module (tree-shakable) - Optimized for modern bundlers
+  // Main ES Module (tree-shakable) - Primary bundle
   {
     input: 'src/index.ts',
     output: {
@@ -61,29 +63,8 @@ export default [
     treeshake: {
       moduleSideEffects: false,
       propertyReadSideEffects: false,
-      unknownGlobalSideEffects: false
-    }
-  },
-  
-  // Core functionality only (minimal bundle) - Tree-shakable
-  {
-    input: 'src/core.ts',
-    output: {
-      file: 'dist/core.esm.js',
-      format: 'es',
-      sourcemap: true,
-      exports: 'named',
-      generatedCode: {
-        preset: 'es2015',
-        constBindings: true
-      }
-    },
-    plugins: sharedPlugins,
-    external: [],
-    treeshake: {
-      moduleSideEffects: false,
-      propertyReadSideEffects: false,
-      unknownGlobalSideEffects: false
+      unknownGlobalSideEffects: false,
+      tryCatchDeoptimization: false
     }
   },
   
@@ -133,37 +114,5 @@ export default [
       propertyReadSideEffects: false,
       unknownGlobalSideEffects: false
     }
-  },
-  
-  // Additional optimized bundles for specific use cases
-  
-  // Minimal core only (no dictionary data)
-  {
-    input: 'src/core.ts',
-    output: {
-      file: 'dist/core.min.js',
-      format: 'cjs',
-      sourcemap: true,
-      exports: 'named'
-    },
-    plugins: [
-      ...sharedPlugins,
-      terser({
-        ...terserConfig,
-        compress: {
-          ...terserConfig.compress,
-          dead_code: true,
-          unused: true
-        }
-      })
-    ],
-    external: [],
-    treeshake: {
-      moduleSideEffects: false,
-      propertyReadSideEffects: false,
-      unknownGlobalSideEffects: false
-    }
-  },
-  
-
+  }
 ];
