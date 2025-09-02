@@ -11,6 +11,9 @@ export type {
   HyphenationResult 
 };
 
+// Re-export dictionary types for convenience
+export type { WordAnalysis, WordSearchOptions } from "./dictionary";
+
 // Import syllableCounter for internal use
 import { syllableCounter } from "./syllable-counter";
 import type { HyphenationOptions } from "./syllable-counter";

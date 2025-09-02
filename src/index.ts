@@ -2,12 +2,25 @@
 export { getSyllableCount, getHyphenatedString } from "./core";
 
 // Dictionary functionality
-export { cmuDictionary } from "./dictionary";
+export { 
+  cmuDictionary,
+  findWordsBySyllableCount,
+  findWordsByStressPattern,
+  findWordsByComplexity,
+  findWordsByVowelCount,
+  getRandomWords,
+  findRhymingWords,
+  getAllWords,
+  getDictionarySize,
+  isWordInDictionary
+} from "./dictionary";
 
 // Essential types for users
 export type { 
   SyllableCountOptions, 
   CoreHyphenationOptions, 
   SyllableCountResult, 
-  HyphenationResult 
+  HyphenationResult,
+  WordAnalysis,
+  WordSearchOptions
 } from "./core";
