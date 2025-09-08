@@ -119,7 +119,10 @@ export async function getSyllableCount(
     ...(includeAnalysis && { 
       analysis: {
         totalWords: words.length,
-        avgSyllablesPerWord: words.length > 0 ? totalSyllableCount / words.length : 0,
+        avgSyllablesPerWord: words.length > 0 ? (() => {
+          const avg = totalSyllableCount / words.length;
+          return avg % 1 === 0 ? avg : Math.round(avg * 100) / 100;
+        })() : 0,
         lines
       }
     })
@@ -186,7 +189,10 @@ export async function getHyphenatedString(
     ...(includeAnalysis && { 
       analysis: {
         totalWords: words.length,
-        avgSyllablesPerWord: wordDetails.reduce((sum, detail) => sum + detail.sc, 0) / words.length,
+        avgSyllablesPerWord: (() => {
+          const avg = wordDetails.reduce((sum, detail) => sum + detail.sc, 0) / words.length;
+          return avg % 1 === 0 ? avg : Math.round(avg * 100) / 100;
+        })(),
         lines
       }
     })

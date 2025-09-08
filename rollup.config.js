@@ -70,9 +70,9 @@ export default [
   
   // CommonJS (full bundle) - Node.js compatibility
   {
-    input: 'src/index.ts',
+    input: 'src/index.cjs.ts',
     output: {
-      file: 'dist/index.js',
+      file: 'dist/index.cjs',
       format: 'cjs',
       sourcemap: true,
       exports: 'named',
@@ -81,7 +81,23 @@ export default [
         constBindings: true
       }
     },
-    plugins: sharedPlugins,
+    plugins: [
+      resolve({
+        preferBuiltins: true,
+        extensions: ['.ts', '.js']
+      }),
+      commonjs({
+        include: /node_modules/,
+        transformMixedEsModules: true
+      }),
+      typescript({
+        tsconfig: './tsconfig.json',
+        declaration: true,
+        declarationMap: true,
+        sourceMap: true,
+        exclude: ['**/*.test.ts', '**/*.spec.ts']
+      })
+    ],
     external: [],
     treeshake: {
       moduleSideEffects: false,
@@ -92,7 +108,7 @@ export default [
   
   // UMD (minified, full bundle) - Browser compatibility
   {
-    input: 'src/index.ts',
+    input: 'src/index.cjs.ts',
     output: {
       file: 'dist/index.umd.min.js',
       format: 'umd',

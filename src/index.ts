@@ -15,6 +15,9 @@ export {
   isWordInDictionary
 } from "./dictionary";
 
+// Raw dictionary data for custom utilities
+export { CMU_DICTIONARY } from "./dictionary-data";
+
 // Essential types for users
 export type { 
   SyllableCountOptions, 
@@ -24,3 +27,6 @@ export type {
   WordAnalysis,
   WordSearchOptions
 } from "./core";
+
+// Dictionary data types
+export type { CMUDictionaryEntry, CMUDictionary } from "./dictionary-types";

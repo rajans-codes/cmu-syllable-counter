@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMU Syllable Counter - UMD Examples</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .example {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        .result {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #ffeaea;
+            color: #d63031;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 CMU Syllable Counter - UMD Examples</h1>
+        <p>This page demonstrates how to use the cmu-syllable-counter library in UMD format in the browser.</p>
+        
+        <div class="example">
+            <h3>Library Status</h3>
+            <div id="library-status">Loading...</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>1. Basic Syllable Counting</h2>
+        <div class="example">
+            <input type="text" id="basic-word" placeholder="Enter a word" value="beautiful">
+            <button onclick="basicSyllableCount()">Count Syllables</button>
+            <div id="basic-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>2. Advanced Syllable Counting</h2>
+        <div class="example">
+            <input type="text" id="advanced-text" placeholder="Enter text" value="hello world programming">
+            <label>
+                <input type="checkbox" id="include-hyp" checked> Include hyphenation
+            </label>
+            <label>
+                <input type="checkbox" id="include-pron"> Include pronunciation
+            </label>
+            <label>
+                <input type="checkbox" id="include-analysis" checked> Include analysis
+            </label>
+            <input type="text" id="delimiter" placeholder="Delimiter" value="·">
+            <button onclick="advancedSyllableCount()">Analyze Text</button>
+            <div id="advanced-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>3. Hyphenation</h2>
+        <div class="example">
+            <textarea id="hyphenation-text" placeholder="Enter text to hyphenate">The quick brown fox jumps over the lazy dog</textarea>
+            <input type="text" id="hyphenation-delimiter" placeholder="Delimiter" value="·">
+            <label>
+                <input type="checkbox" id="hyphenation-analysis" checked> Include analysis
+            </label>
+            <button onclick="hyphenateText()">Hyphenate Text</button>
+            <div id="hyphenation-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>4. Word Search</h2>
+        <div class="grid">
+            <div class="example">
+                <h3>By Syllable Count</h3>
+                <input type="number" id="syllable-count" placeholder="Syllable count" value="3" min="1" max="10">
+                <input type="number" id="syllable-limit" placeholder="Limit" value="5" min="1" max="20">
+                <button onclick="searchBySyllables()">Find Words</button>
+                <div id="syllable-search-result" class="result"></div>
+            </div>
+            
+            <div class="example">
+                <h3>By Complexity</h3>
+                <select id="complexity-level">
+                    <option value="simple">Simple</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="complex">Complex</option>
+                </select>
+                <input type="number" id="complexity-limit" placeholder="Limit" value="5" min="1" max="20">
+                <button onclick="searchByComplexity()">Find Words</button>
+                <div id="complexity-search-result" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>5. Rhyming Words</h2>
+        <div class="example">
+            <input type="text" id="rhyme-word" placeholder="Enter a word to find rhymes" value="cat">
+            <input type="number" id="rhyme-limit" placeholder="Limit" value="5" min="1" max="20">
+            <button onclick="findRhymes()">Find Rhymes</button>
+            <div id="rhyme-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>6. Random Words</h2>
+        <div class="example">
+            <input type="number" id="random-count" placeholder="Number of words" value="5" min="1" max="20">
+            <label>
+                <input type="checkbox" id="random-pronunciation" checked> Include pronunciation
+            </label>
+            <label>
+                <input type="checkbox" id="random-hyphenation" checked> Include hyphenation
+            </label>
+            <button onclick="getRandomWords()">Get Random Words</button>
+            <div id="random-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>7. Dictionary Operations</h2>
+        <div class="grid">
+            <div class="example">
+                <h3>Check if Word Exists</h3>
+                <input type="text" id="check-word" placeholder="Enter a word" value="hello">
+                <button onclick="checkWord()">Check Word</button>
+                <div id="check-result" class="result"></div>
+            </div>
+            
+            <div class="example">
+                <h3>Dictionary Stats</h3>
+                <button onclick="showDictionaryStats()">Show Stats</button>
+                <div id="stats-result" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>8. Custom Utilities</h2>
+        <div class="example">
+            <h3>Words Ending with Pattern</h3>
+            <input type="text" id="pattern" placeholder="Pattern (e.g., 'ing')" value="ing">
+            <input type="number" id="pattern-syllables" placeholder="Syllable count" value="2" min="1" max="10">
+            <input type="number" id="pattern-limit" placeholder="Limit" value="10" min="1" max="50">
+            <button onclick="findWordsByPattern()">Find Words</button>
+            <div id="pattern-result" class="result"></div>
+        </div>
+    </div>
+
+    <!-- Load the UMD library -->
+    <script src="index.umd.min.js"></script>
+    
+    <script>
+        // Check if library is loaded
+        function checkLibraryStatus() {
+            const statusDiv = document.getElementById('library-status');
+            if (typeof CMUSyllableCounter !== 'undefined') {
+                statusDiv.innerHTML = `
+                    <strong>✅ Library Loaded Successfully!</strong><br>
+                    Available functions: ${Object.keys(CMUSyllableCounter).join(', ')}<br>
+                    Dictionary size: ${CMUSyllableCounter.getDictionarySize()} words
+                `;
+            } else {
+                statusDiv.innerHTML = '<div class="error">❌ Library not loaded. Please check the script path.</div>';
+            }
+        }
+
+        // Basic syllable counting
+        async function basicSyllableCount() {
+            const word = document.getElementById('basic-word').value.trim();
+            const resultDiv = document.getElementById('basic-result');
+            
+            if (!word) {
+                resultDiv.innerHTML = '<div class="error">Please enter a word</div>';
+                return;
+            }
+            
+            try {
+                const result = await CMUSyllableCounter.getSyllableCount(word);
+                resultDiv.innerHTML = `"${word}" has ${result.totalSyllableCount} syllables`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Advanced syllable counting
+        async function advancedSyllableCount() {
+            const text = document.getElementById('advanced-text').value.trim();
+            const resultDiv = document.getElementById('advanced-result');
+            const includeHyp = document.getElementById('include-hyp').checked;
+            const includePron = document.getElementById('include-pron').checked;
+            const includeAnalysis = document.getElementById('include-analysis').checked;
+            const delimiter = document.getElementById('delimiter').value || '-';
+            
+            if (!text) {
+                resultDiv.innerHTML = '<div class="error">Please enter text</div>';
+                return;
+            }
+            
+            try {
+                const result = await CMUSyllableCounter.getSyllableCount(text, {
+                    includeHyp,
+                    includePron,
+                    includeAnalysis,
+                    delimiter
+                });
+                resultDiv.innerHTML = JSON.stringify(result, null, 2);
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Hyphenation
+        async function hyphenateText() {
+            const text = document.getElementById('hyphenation-text').value.trim();
+            const resultDiv = document.getElementById('hyphenation-result');
+            const delimiter = document.getElementById('hyphenation-delimiter').value || '-';
+            const includeAnalysis = document.getElementById('hyphenation-analysis').checked;
+            
+            if (!text) {
+                resultDiv.innerHTML = '<div class="error">Please enter text</div>';
+                return;
+            }
+            
+            try {
+                const result = await CMUSyllableCounter.getHyphenatedString(text, {
+                    delimiter,
+                    includeAnalysis
+                });
+                resultDiv.innerHTML = `Hyphenated: ${result.hyp}\n\nAnalysis: ${JSON.stringify(result.analysis, null, 2)}`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Search by syllables
+        function searchBySyllables() {
+            const syllableCount = parseInt(document.getElementById('syllable-count').value);
+            const limit = parseInt(document.getElementById('syllable-limit').value);
+            const resultDiv = document.getElementById('syllable-search-result');
+            
+            try {
+                const words = CMUSyllableCounter.findWordsBySyllableCount(syllableCount, {
+                    limit,
+                    includePronunciation: true,
+                    includeHyphenation: true
+                });
+                
+                let result = `Words with ${syllableCount} syllables:\n`;
+                words.forEach(word => {
+                    result += `- ${word.word} (${word.hyphenated})\n`;
+                });
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Search by complexity
+        function searchByComplexity() {
+            const complexity = document.getElementById('complexity-level').value;
+            const limit = parseInt(document.getElementById('complexity-limit').value);
+            const resultDiv = document.getElementById('complexity-search-result');
+            
+            try {
+                const words = CMUSyllableCounter.findWordsByComplexity(complexity, {
+                    limit,
+                    includePronunciation: true
+                });
+                
+                let result = `${complexity.charAt(0).toUpperCase() + complexity.slice(1)} words:\n`;
+                words.forEach(word => {
+                    result += `- ${word.word}: ${word.pronunciation} (${word.phonemeCount} phonemes)\n`;
+                });
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Find rhymes
+        function findRhymes() {
+            const word = document.getElementById('rhyme-word').value.trim();
+            const limit = parseInt(document.getElementById('rhyme-limit').value);
+            const resultDiv = document.getElementById('rhyme-result');
+            
+            if (!word) {
+                resultDiv.innerHTML = '<div class="error">Please enter a word</div>';
+                return;
+            }
+            
+            try {
+                const rhymes = CMUSyllableCounter.findRhymingWords(word, {
+                    limit,
+                    includePronunciation: true
+                });
+                
+                let result = `Words that rhyme with "${word}":\n`;
+                rhymes.forEach(rhyme => {
+                    result += `- ${rhyme.word}: ${rhyme.pronunciation}\n`;
+                });
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Get random words
+        function getRandomWords() {
+            const count = parseInt(document.getElementById('random-count').value);
+            const includePronunciation = document.getElementById('random-pronunciation').checked;
+            const includeHyphenation = document.getElementById('random-hyphenation').checked;
+            const resultDiv = document.getElementById('random-result');
+            
+            try {
+                const words = CMUSyllableCounter.getRandomWords(count, {
+                    includePronunciation,
+                    includeHyphenation
+                });
+                
+                let result = `Random words:\n`;
+                words.forEach(word => {
+                    result += `- ${word.word}: ${word.hyphenated} (${word.syllables} syllables)\n`;
+                });
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Check if word exists
+        function checkWord() {
+            const word = document.getElementById('check-word').value.trim();
+            const resultDiv = document.getElementById('check-result');
+            
+            if (!word) {
+                resultDiv.innerHTML = '<div class="error">Please enter a word</div>';
+                return;
+            }
+            
+            try {
+                const exists = CMUSyllableCounter.isWordInDictionary(word);
+                const result = exists ? '✅ Found in dictionary' : '❌ Not found in dictionary';
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Show dictionary stats
+        function showDictionaryStats() {
+            const resultDiv = document.getElementById('stats-result');
+            
+            try {
+                const size = CMUSyllableCounter.getDictionarySize();
+                const allWords = CMUSyllableCounter.getAllWords();
+                
+                // Calculate some basic stats
+                const wordLengths = allWords.map(word => word.length);
+                const avgLength = (wordLengths.reduce((a, b) => a + b, 0) / wordLengths.length).toFixed(2);
+                const maxLength = Math.max(...wordLengths);
+                const minLength = Math.min(...wordLengths);
+                
+                let result = `Dictionary Statistics:\n`;
+                result += `Total words: ${size}\n`;
+                result += `Average word length: ${avgLength} characters\n`;
+                result += `Longest word: ${maxLength} characters\n`;
+                result += `Shortest word: ${minLength} characters\n`;
+                
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Find words by pattern
+        function findWordsByPattern() {
+            const pattern = document.getElementById('pattern').value.trim();
+            const syllables = parseInt(document.getElementById('pattern-syllables').value);
+            const limit = parseInt(document.getElementById('pattern-limit').value);
+            const resultDiv = document.getElementById('pattern-result');
+            
+            if (!pattern) {
+                resultDiv.innerHTML = '<div class="error">Please enter a pattern</div>';
+                return;
+            }
+            
+            try {
+                const dictionary = CMUSyllableCounter.CMU_DICTIONARY;
+                const words = Object.entries(dictionary)
+                    .filter(([word, data]) => word.endsWith(pattern) && data.s === syllables)
+                    .slice(0, limit)
+                    .map(([word, data]) => ({ word, ...data }));
+                
+                let result = `Words ending with "${pattern}" (${syllables} syllables):\n`;
+                words.forEach(word => {
+                    result += `- ${word.word}: ${word.h} (${word.s} syllables)\n`;
+                });
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            checkLibraryStatus();
+        });
+    </script>
+</body>
+</html>

@@ -1,26 +1,20 @@
 {
   "name": "cmu-syllable-counter-examples",
   "version": "1.0.0",
-  "description": "Examples demonstrating tree-shaking with cmu-syllable-counter",
+  "description": "Usage examples for cmu-syllable-counter library",
   "type": "module",
   "scripts": {
-    "minimal": "node 01-minimal-import.js",
-    "dictionary": "node 02-dictionary-only.js",
-    "full": "node 03-full-import.js",
-    "webpack": "node 04-webpack-example.js",
-    "rollup": "node 05-rollup-example.js",
-    "vite": "node 06-vite-example.js",
-    "test-all": "npm run minimal && npm run dictionary && npm run full",
-    "configs": "npm run webpack && npm run rollup && npm run vite"
+    "test": "node test-examples.js",
+    "esm": "node esm-example.js",
+    "commonjs": "node commonjs-example.cjs",
+    "serve": "python -m http.server 8000",
+    "serve-node": "npx serve ."
   },
   "keywords": [
-    "tree-shaking",
-    "bundle-optimization",
-    "cmu-syllable-counter",
+    "syllables",
     "examples",
-    "webpack",
-    "rollup",
-    "vite"
+    "cmu",
+    "dictionary"
   ],
   "author": "Rajan Singh",
   "license": "MIT"

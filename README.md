@@ -403,6 +403,37 @@ const notExists = isWordInDictionary('xyzqwerty');
 console.log(notExists); // false
 ```
 
+#### `CMU_DICTIONARY`
+
+Access the raw CMU dictionary data for custom utilities.
+
+**Type:** `Record<string, CMUDictionaryEntry>`
+
+**Example:**
+```javascript
+import { CMU_DICTIONARY } from 'cmu-syllable-counter';
+
+// Direct access to dictionary data
+const helloData = CMU_DICTIONARY['hello'];
+console.log(helloData);
+// { s: 2, p: 'HH AH0 L OW1', h: 'hel-lo' }
+
+// Build custom utilities
+function getWordsBySyllableCount(targetSyllables) {
+  return Object.entries(CMU_DICTIONARY)
+    .filter(([word, data]) => data.s === targetSyllables)
+    .map(([word, data]) => ({ word, ...data }));
+}
+
+const twoSyllableWords = getWordsBySyllableCount(2);
+console.log(twoSyllableWords.slice(0, 3));
+// [
+//   { word: 'hello', s: 2, p: 'HH AH0 L OW1', h: 'hel-lo' },
+//   { word: 'world', s: 2, p: 'W ER1 L D', h: 'world' },
+//   // ... more words
+// ]
+```
+
 
 ## 🎨 TypeScript Types
 
@@ -492,6 +523,20 @@ interface WordAnalysis {
 }
 ```
 
+#### `CMUDictionaryEntry`
+```typescript
+interface CMUDictionaryEntry {
+  s: number;  // syllable count
+  p: string;  // pronunciation (ARPAbet)
+  h?: string; // hyphenation (optional)
+}
+```
+
+#### `CMUDictionary`
+```typescript
+type CMUDictionary = Record<string, CMUDictionaryEntry>;
+```
+
 ## 🔧 Advanced Usage
 
 ### Custom Hyphenation Patterns
@@ -545,6 +590,43 @@ const randomWords = getRandomWords(10, {
 
 // Find words by complexity
 const simpleWords = findWordsByComplexity('simple', { limit: 20 });
+```
+
+### Custom Utilities with Raw Dictionary Data
+
+```javascript
+import { CMU_DICTIONARY } from 'cmu-syllable-counter';
+
+// Build custom word filters
+function getWordsByStressPattern(pattern) {
+  return Object.entries(CMU_DICTIONARY)
+    .filter(([word, data]) => {
+      const stresses = data.p.match(/\d+/g) || [];
+      return stresses.join('') === pattern;
+    })
+    .map(([word, data]) => ({ word, ...data }));
+}
+
+// Find words with specific phoneme patterns
+function getWordsWithPhoneme(phoneme) {
+  return Object.entries(CMU_DICTIONARY)
+    .filter(([word, data]) => data.p.includes(phoneme))
+    .map(([word, data]) => ({ word, ...data }));
+}
+
+// Create custom syllable analysis
+function analyzeSyllableDistribution() {
+  const distribution = {};
+  Object.values(CMU_DICTIONARY).forEach(entry => {
+    distribution[entry.s] = (distribution[entry.s] || 0) + 1;
+  });
+  return distribution;
+}
+
+// Usage examples
+const stressedWords = getWordsByStressPattern('10'); // First syllable stressed
+const wordsWithK = getWordsWithPhoneme('K'); // Words containing 'K' sound
+const syllableStats = analyzeSyllableDistribution(); // {1: 50000, 2: 40000, ...}
 ```
 
 ### Performance Optimization

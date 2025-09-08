@@ -1,164 +1,279 @@
-# Tree-Shaking Examples
+# CMU Syllable Counter - Usage Examples
 
-This folder contains examples demonstrating how to use the `cmu-syllable-counter` library with different bundlers to achieve optimal tree-shaking and bundle optimization.
+This directory contains comprehensive examples showing how to use the `cmu-syllable-counter` library in all three supported formats: ESM, CommonJS, and UMD.
 
-## 🎯 What is Tree-Shaking?
+## 📁 Files Overview
 
-Tree-shaking is a technique that eliminates dead code from your bundle by analyzing import/export statements. It allows you to import only the functions you need, resulting in smaller bundle sizes.
+- **`esm-example.js`** - ESM (ES Modules) usage examples
+- **`commonjs-example.cjs`** - CommonJS usage examples  
+- **`umd-example.html`** - UMD browser usage examples
+- **`README.md`** - This documentation file
 
-## 📁 Examples Overview
+## 🚀 Quick Start
 
-### 1. **Minimal Import** (`01-minimal-import.js`)
-- **Import**: Only `getSyllableCount`
-- **Bundle Size**: ~100KB
-- **Use Case**: When you only need basic syllable counting
-- **Tree-Shaking**: ✅ Optimal - excludes dictionary data and unused utilities
+### ESM (ES Modules)
 
-### 2. **Dictionary Utilities Only** (`02-dictionary-only.js`)
-- **Import**: Dictionary functions only
-- **Bundle Size**: ~2-3MB
-- **Use Case**: When you need dictionary search capabilities
-- **Tree-Shaking**: ✅ Good - excludes syllable counting logic
+```javascript
+import { getSyllableCount, getHyphenatedString } from 'cmu-syllable-counter';
 
-### 3. **Full Import** (`03-full-import.js`)
-- **Import**: All available functions
-- **Bundle Size**: ~7.9MB
-- **Use Case**: When you need the complete library
-- **Tree-Shaking**: ❌ None - everything included
+// Basic usage
+const result = await getSyllableCount('beautiful');
+console.log(result.totalSyllableCount); // 3
 
-### 4. **Webpack Configuration** (`04-webpack-example.js`)
-- **Purpose**: Webpack setup for tree-shaking
-- **Key Settings**: Production mode, used exports, side effects
-- **Difficulty**: Medium
+// With options
+const detailed = await getSyllableCount('hello world', {
+  includeHyp: true,
+  delimiter: '·',
+  includePron: true,
+  includeAnalysis: true
+});
+```
 
-### 5. **Rollup Configuration** (`05-rollup-example.js`)
-- **Purpose**: Rollup setup for tree-shaking
-- **Key Settings**: ES modules, treeshake options
-- **Difficulty**: Easy (automatic for ES modules)
+### CommonJS
 
-### 6. **Vite Configuration** (`06-vite-example.js`)
-- **Purpose**: Vite setup for tree-shaking
-- **Key Settings**: Automatic (no config needed)
-- **Difficulty**: Easiest
+```javascript
+const { getSyllableCount, getHyphenatedString } = require('cmu-syllable-counter');
 
-## 🚀 Running the Examples
+// Basic usage
+getSyllableCount('beautiful').then(result => {
+  console.log(result.totalSyllableCount); // 3
+});
+```
+
+### UMD (Browser)
+
+```html
+<script src="path/to/index.umd.min.js"></script>
+<script>
+  // Available as global CMUSyllableCounter
+  CMUSyllableCounter.getSyllableCount('beautiful').then(result => {
+    console.log(result.totalSyllableCount); // 3
+  });
+</script>
+```
+
+## 📋 Running the Examples
 
 ### Prerequisites
+
+1. Make sure you have built the library:
+   ```bash
+   npm run build
+   ```
+
+2. Ensure the `dist/` directory contains the built files:
+   - `dist/index.esm.js` (ESM format)
+   - `dist/index.cjs` (CommonJS format)
+   - `dist/index.umd.min.js` (UMD format)
+
+### ESM Example
+
 ```bash
-npm install
-npm run build
+node examples/esm-example.js
 ```
 
-### Run Examples
+**Note**: This requires Node.js 14+ with ES modules support.
+
+### CommonJS Example
+
 ```bash
-# Minimal import
-node examples/01-minimal-import.js
-
-# Dictionary utilities only
-node examples/02-dictionary-only.js
-
-# Full import
-node examples/03-full-import.js
-
-# Configuration examples (view only)
-node examples/04-webpack-example.js
-node examples/05-rollup-example.js
-node examples/06-vite-example.js
+node examples/commonjs-example.cjs
 ```
 
-## 📊 Bundle Size Comparison
+**Note**: This works with any Node.js version that supports CommonJS.
 
-| Import Pattern | Bundle Size | Tree-Shaking | Use Case |
-|----------------|-------------|---------------|----------|
-| `getSyllableCount` only | ~100KB | ✅ Optimal | Basic syllable counting |
-| Dictionary utilities | ~2-3MB | ✅ Good | Dictionary operations |
-| Full library | ~7.9MB | ❌ None | Complete functionality |
+### UMD Example
 
-## 🔧 Bundler-Specific Setup
+1. Open `examples/umd-example.html` in a web browser
+2. Or serve it via a local server:
+   ```bash
+   # Using Python
+   python -m http.server 8000
+   
+   # Using Node.js
+   npx serve .
+   
+   # Then visit: http://localhost:8000/examples/umd-example.html
+   ```
 
-### Webpack
+## 🎯 Example Features
+
+Each example demonstrates:
+
+### Core Functions
+- **`getSyllableCount()`** - Count syllables in text
+- **`getHyphenatedString()`** - Hyphenate text
+- **`cmuDictionary`** - Dictionary operations
+
+### Search Functions
+- **`findWordsBySyllableCount()`** - Find words by syllable count
+- **`findWordsByComplexity()`** - Find words by complexity level
+- **`findWordsByStressPattern()`** - Find words by stress pattern
+- **`findWordsByVowelCount()`** - Find words by vowel count
+- **`findRhymingWords()`** - Find rhyming words
+- **`getRandomWords()`** - Get random words
+
+### Utility Functions
+- **`isWordInDictionary()`** - Check if word exists
+- **`getDictionarySize()`** - Get dictionary size
+- **`getAllWords()`** - Get all words
+- **`CMU_DICTIONARY`** - Direct dictionary access
+
+## 🔧 Configuration Options
+
+### getSyllableCount Options
+
 ```javascript
-// webpack.config.js
-module.exports = {
-  mode: 'production',
-  optimization: {
-    usedExports: true,
-    sideEffects: false
-  }
+const options = {
+  includeHyp: true,           // Include hyphenation in results
+  delimiter: '·',            // Custom delimiter for hyphenation
+  includePron: true,         // Include pronunciation
+  includeAnalysis: true      // Include text analysis
 };
 ```
 
-### Rollup
+### getHyphenatedString Options
+
 ```javascript
-// rollup.config.js
-export default {
-  output: { format: 'es' },
-  treeshake: {
-    moduleSideEffects: false,
-    propertyReadSideEffects: false
-  }
+const options = {
+  delimiter: '·',            // Custom delimiter
+  includeAnalysis: true      // Include text analysis
 };
 ```
 
-### Vite
+### Search Function Options
+
 ```javascript
-// vite.config.js
-export default {
-  build: {
-    target: 'es2015',
-    minify: 'terser'
-  }
+const options = {
+  limit: 10,                 // Maximum number of results
+  includePronunciation: true, // Include pronunciation
+  includeSyllables: true,    // Include syllable count
+  includeHyphenation: true   // Include hyphenation
 };
 ```
 
-## 🌟 Best Practices
+## 📊 Output Examples
 
-1. **Import Only What You Need**
-   ```javascript
-   // ✅ Good - Tree-shakable
-   import { getSyllableCount } from 'cmu-syllable-counter';
-   
-   // ❌ Avoid - No tree-shaking
-   import * as CMU from 'cmu-syllable-counter';
-   ```
+### Basic Syllable Count
 
-2. **Use ES Modules**
-   ```javascript
-   // ✅ Good - ES modules enable tree-shaking
-   import { findWordsBySyllableCount } from 'cmu-syllable-counter';
-   
-   // ❌ Avoid - CommonJS doesn't tree-shake well
-   const { findWordsBySyllableCount } = require('cmu-syllable-counter');
-   ```
+```javascript
+{
+  totalSyllableCount: 3
+}
+```
 
-3. **Enable Production Mode**
-   ```javascript
-   // ✅ Good - Production mode enables tree-shaking
-   mode: 'production'
-   
-   // ❌ Avoid - Development mode may not tree-shake
-   mode: 'development'
-   ```
+### Detailed Syllable Count
 
-## 🔍 Verifying Tree-Shaking
+```javascript
+{
+  totalSyllableCount: 8,
+  wordDetails: [
+    {
+      word: "hello",
+      hyp: "hel-lo",
+      sc: 2,
+      source: "cmu",
+      pron: "HH AH0 L OW1"
+    },
+    {
+      word: "world",
+      hyp: "world",
+      sc: 1,
+      source: "cmu",
+      pron: "W ER1 L D"
+    }
+  ],
+  analysis: {
+    totalWords: 2,
+    avgSyllablesPerWord: 1.5,
+    lines: 1
+  }
+}
+```
 
-1. **Check Bundle Size**: Compare bundle sizes between different import patterns
-2. **Bundle Analyzer**: Use tools like `webpack-bundle-analyzer` or `rollup-plugin-visualizer`
-3. **Source Maps**: Verify that unused code is not included in the final bundle
+### Hyphenated String
+
+```javascript
+{
+  hyp: "hel-lo world pro-gram-ming",
+  words: [
+    { word: "hello", hyp: "hel-lo", sc: 2, source: "cmu" },
+    { word: "world", hyp: "world", sc: 1, source: "cmu" },
+    { word: "programming", hyp: "pro-gram-ming", sc: 3, source: "cmu" }
+  ],
+  analysis: {
+    totalWords: 3,
+    avgSyllablesPerWord: 2,
+    lines: 1
+  }
+}
+```
+
+## 🎨 Custom Utilities
+
+The examples also show how to create custom utilities using the raw dictionary data:
+
+```javascript
+// Find words ending with "ing" that have 2 syllables
+const ingWords = Object.entries(CMU_DICTIONARY)
+  .filter(([word, data]) => word.endsWith('ing') && data.s === 2)
+  .slice(0, 10)
+  .map(([word, data]) => ({ word, ...data }));
+
+// Find words with specific stress patterns
+const stressWords = Object.entries(CMU_DICTIONARY)
+  .filter(([word, data]) => {
+    const stressPattern = data.p.split(' ')
+      .map(phoneme => /\d/.test(phoneme) ? phoneme.match(/\d/)[0] : '0')
+      .join('');
+    return stressPattern === '010';
+  })
+  .slice(0, 10);
+```
+
+## 🐛 Troubleshooting
+
+### ESM Issues
+
+If you get "Cannot use import statement outside a module":
+- Ensure your `package.json` has `"type": "module"`
+- Or use `.mjs` extension for the file
+- Or use Node.js 14+ with proper ES modules support
+
+### CommonJS Issues
+
+If you get "require is not defined":
+- Ensure you're running in a Node.js environment
+- Check that the file has `.js` extension (not `.mjs`)
+
+### UMD Issues
+
+If the library doesn't load in browser:
+- Check that the script path is correct
+- Ensure the file is served over HTTP/HTTPS (not file://)
+- Check browser console for errors
+
+### Build Issues
+
+If examples don't work:
+- Run `npm run build` to ensure all formats are built
+- Check that `dist/` directory contains all required files
+- Verify file sizes (UMD should be ~6MB, others smaller)
 
 ## 📚 Additional Resources
 
-- [Webpack Tree-Shaking Guide](https://webpack.js.org/guides/tree-shaking/)
-- [Rollup Tree-Shaking](https://rollupjs.org/guide/en/#tree-shaking)
-- [Vite Build Optimization](https://vitejs.dev/guide/build.html#chunking-strategy)
+- [Main README](../README.md) - Complete library documentation
+- [API Reference](../README.md#api-reference) - Detailed API documentation
+- [GitHub Repository](https://github.com/rajans-codes/cmu-syllable-counter) - Source code and issues
 
-## 🎉 Benefits
+## 🤝 Contributing
 
-- **Smaller Bundles**: Only include code you actually use
-- **Faster Loading**: Reduced bundle size means faster page loads
-- **Better Caching**: Smaller chunks are easier to cache
-- **Cost Savings**: Less bandwidth usage in production
+Found an issue with the examples? Please:
+
+1. Check the [troubleshooting section](#-troubleshooting)
+2. Open an issue on GitHub
+3. Or submit a pull request with improvements
 
 ---
 
-**Note**: Tree-shaking effectiveness depends on your bundler configuration and the specific functions you import. Always test with your actual build setup to verify the results.
+**Happy syllable counting!** 🎵
