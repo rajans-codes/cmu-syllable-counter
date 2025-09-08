@@ -16,7 +16,7 @@ export {
 } from "./dictionary";
 
 // Raw dictionary data for custom utilities
-export { CMU_DICTIONARY } from "./dictionary-data";
+export { CMU_DICTIONARY } from "./dictionary-data-compressed";
 
 // Essential types for users
 export type { 

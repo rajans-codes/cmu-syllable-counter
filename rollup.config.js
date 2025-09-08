@@ -22,25 +22,112 @@ const sharedPlugins = [
   })
 ];
 
-// Terser configuration for better compression
+// Optimized Terser configuration for maximum compression
 const terserConfig = {
   compress: {
+    // Remove console statements and debugger
     drop_console: true,
     drop_debugger: true,
-    pure_funcs: ['console.log', 'console.info', 'console.debug'],
-    passes: 2,
+    pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn', 'console.error'],
+    
+    // Multiple passes for better optimization
+    passes: 3,
+    
+    // Dead code elimination
     dead_code: true,
-    unused: true
+    unused: true,
+    
+    // Variable and expression optimization
+    collapse_vars: true,
+    reduce_vars: true,
+    sequences: true,
+    conditionals: true,
+    comparisons: true,
+    evaluate: true,
+    booleans: true,
+    loops: true,
+    if_return: true,
+    join_vars: true,
+    
+    // Advanced optimizations
+    side_effects: false,
+    properties: true,
+    unsafe: false,
+    unsafe_comps: false,
+    unsafe_math: false,
+    unsafe_proto: false,
+    unsafe_regexp: false,
+    unsafe_undefined: false,
+    
+    // Function optimizations
+    keep_fargs: false,
+    keep_fnames: false,
+    
+    // Hoisting optimizations
+    hoist_funs: true,
+    hoist_vars: true,
+    
+    // Switch optimizations
+    switches: true,
+    
+    // Global optimizations
+    global_defs: {},
+    
+    // Remove unused imports
+    pure_getters: true,
+    
+    // Optimize typeof
+    typeofs: true
   },
   mangle: {
+    // Mangle top-level names
     toplevel: true,
+    
+    // Mangle properties with underscore prefix
     properties: {
       regex: /^_/
-    }
+    },
+    
+    // Mangle function names
+    keep_fnames: false,
+    
+    // Mangle class names
+    keep_classnames: false,
+    
+    // Reserved names (don't mangle these)
+    reserved: ['CMUSyllableCounter', 'getSyllableCount', 'getHyphenatedString', 'cmuDictionary']
   },
   format: {
-    comments: false
-  }
+    // Remove all comments
+    comments: false,
+    
+    // Compact output
+    beautify: false,
+    
+    // Preserve semicolons for better compression
+    semicolons: true,
+    
+    // ASCII only
+    ascii_only: false,
+    
+    // Quote style
+    quote_style: 1,
+    
+    // Wrap iife
+    wrap_iife: false,
+    
+    // Preamble
+    preamble: null
+  },
+  
+  // Additional options
+  ecma: 2015,
+  keep_classnames: false,
+  keep_fnames: false,
+  module: false,
+  nameCache: null,
+  safari10: false,
+  toplevel: true
 };
 
 export default [
@@ -58,7 +145,10 @@ export default [
         constBindings: true
       }
     },
-    plugins: sharedPlugins,
+    plugins: [
+      ...sharedPlugins,
+      terser(terserConfig)
+    ],
     external: [],
     treeshake: {
       moduleSideEffects: false,
@@ -96,7 +186,8 @@ export default [
         declarationMap: true,
         sourceMap: true,
         exclude: ['**/*.test.ts', '**/*.spec.ts']
-      })
+      }),
+      terser(terserConfig)
     ],
     external: [],
     treeshake: {

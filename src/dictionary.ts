@@ -1,4 +1,5 @@
-import { CMU_DICTIONARY } from './dictionary-data';
+import { CMU_DICTIONARY } from './dictionary-data-compressed';
+import type { CMUDictionaryEntry } from './dictionary-types';
 
 // Vowel patterns for fallback syllable counting (needed by fallback-syllable-count.ts)
 export const VOWEL_PATTERNS = /[aeiouy]+/gi;
@@ -223,24 +224,25 @@ export function findWordsBySyllableCount(
   const results: WordAnalysis[] = [];
   
   for (const [word, data] of Object.entries(CMU_DICTIONARY)) {
-    if (data.s === syllableCount) {
+    const entry = data as CMUDictionaryEntry;
+    if (entry.s === syllableCount) {
       const analysis: WordAnalysis = { 
         word, 
-        syllables: data.s
+        syllables: entry.s
       };
       
       // Only calculate expensive properties if needed
       if (includePronunciation) {
-        analysis.pronunciation = data.p;
-        analysis.phonemeCount = data.p.split(' ').length;
-        analysis.vowelCount = countVowelsFromPronunciation(data.p);
-        analysis.consonantCount = countConsonantsFromPronunciation(data.p);
-        analysis.stressPattern = extractStressPattern(data.p);
-        analysis.complexity = determineComplexity(data.p);
+        analysis.pronunciation = entry.p;
+        analysis.phonemeCount = entry.p.split(' ').length;
+        analysis.vowelCount = countVowelsFromPronunciation(entry.p);
+        analysis.consonantCount = countConsonantsFromPronunciation(entry.p);
+        analysis.stressPattern = extractStressPattern(entry.p);
+        analysis.complexity = determineComplexity(entry.p);
       }
       
-      if (includeHyphenation && data.h) {
-        analysis.hyphenated = data.h;
+      if (includeHyphenation && entry.h) {
+        analysis.hyphenated = entry.h;
       }
       
       results.push(analysis);
@@ -263,13 +265,14 @@ export function findWordsByStressPattern(
   const results: WordAnalysis[] = [];
   
   for (const [word, data] of Object.entries(CMU_DICTIONARY)) {
-    const stressPattern = extractStressPattern(data.p);
+    const entry = data as CMUDictionaryEntry;
+    const stressPattern = extractStressPattern(entry.p);
     
     if (stressPattern === pattern) {
       const analysis: WordAnalysis = { 
         word, 
-        pronunciation: data.p,
-        syllables: data.s,
+        pronunciation: entry.p,
+        syllables: entry.s,
         stressPattern
       };
       
@@ -293,15 +296,16 @@ export function findWordsByComplexity(
   const results: WordAnalysis[] = [];
   
   for (const [word, data] of Object.entries(CMU_DICTIONARY)) {
-    const wordComplexity = determineComplexity(data.p);
+    const entry = data as CMUDictionaryEntry;
+    const wordComplexity = determineComplexity(entry.p);
     
     if (wordComplexity === complexity) {
       const analysis: WordAnalysis = { 
         word, 
-        pronunciation: data.p,
-        syllables: data.s,
+        pronunciation: entry.p,
+        syllables: entry.s,
         complexity: wordComplexity,
-        phonemeCount: data.p.split(' ').length
+        phonemeCount: entry.p.split(' ').length
       };
       
       results.push(analysis);
@@ -324,15 +328,16 @@ export function findWordsByVowelCount(
   const results: WordAnalysis[] = [];
   
   for (const [word, data] of Object.entries(CMU_DICTIONARY)) {
-    const vowels = countVowelsFromPronunciation(data.p);
+    const entry = data as CMUDictionaryEntry;
+    const vowels = countVowelsFromPronunciation(entry.p);
     
     if (vowels === vowelCount) {
       const analysis: WordAnalysis = { 
         word, 
-        pronunciation: data.p,
-        syllables: data.s,
+        pronunciation: entry.p,
+        syllables: entry.s,
         vowelCount: vowels,
-        consonantCount: countConsonantsFromPronunciation(data.p)
+        consonantCount: countConsonantsFromPronunciation(entry.p)
       };
       
       results.push(analysis);
@@ -362,7 +367,7 @@ export function getRandomWords(count: number = 10, options: WordSearchOptions = 
   }
   
   return selectedWords.map(word => {
-    const data = CMU_DICTIONARY[word];
+    const data = CMU_DICTIONARY[word] as CMUDictionaryEntry;
     const analysis: WordAnalysis = { word };
     
     if (includePronunciation) {
@@ -395,7 +400,7 @@ export function findRhymingWords(
   if (!targetData) return results;
   
   const targetPhonemes = targetData.p.split(' ');
-  const targetVowels = targetPhonemes.filter(p => VOWEL_PHONEME_REGEX.test(p) || STRESS_MARKER_REGEX.test(p));
+  const targetVowels = targetPhonemes.filter((p: string) => VOWEL_PHONEME_REGEX.test(p) || STRESS_MARKER_REGEX.test(p));
   
   if (targetVowels.length === 0) return results;
   
@@ -406,8 +411,9 @@ export function findRhymingWords(
   for (const [word, data] of Object.entries(CMU_DICTIONARY)) {
     if (word === targetWord.toLowerCase()) continue;
     
-    const phonemes = data.p.split(' ');
-    const vowels = phonemes.filter(p => /^[AEIOU]/i.test(p) || /\d/.test(p));
+    const entry = data as CMUDictionaryEntry;
+    const phonemes = entry.p.split(' ');
+    const vowels = phonemes.filter((p: string) => /^[AEIOU]/i.test(p) || /\d/.test(p));
     
     if (vowels.length === 0) continue;
     
@@ -417,8 +423,8 @@ export function findRhymingWords(
     if (wordSuffix === rhymingSuffix) {
       const analysis: WordAnalysis = { 
         word, 
-        pronunciation: data.p,
-        syllables: data.s
+        pronunciation: entry.p,
+        syllables: entry.s
       };
       
       results.push(analysis);
