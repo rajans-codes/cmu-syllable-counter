@@ -2,7 +2,7 @@
 
 A high-performance, production-ready JavaScript/TypeScript library for syllable counting and word hyphenation based on the CMU Pronouncing Dictionary with intelligent fallback algorithms.
 
-> **Inspiration**: This library was built because of [FreeSyllableCounter.com](https://freesyllablecounter.com/) - you can see the usage and functionality there. We wanted to provide a programmatic API for developers who need syllable counting capabilities in their applications.
+> **Powered by**: [FreeSyllableCounter.com](https://freesyllablecounter.com/) uses this `cmu-syllable-counter` package to power its syllable counting functionality. You can see the package in action by visiting their website!
 
 ## 🚀 Features
 
@@ -19,7 +19,7 @@ A high-performance, production-ready JavaScript/TypeScript library for syllable 
 
 ## 🌟 Why This Library?
 
-This library was inspired by [FreeSyllableCounter.com](https://freesyllablecounter.com/), which provides an excellent web interface for syllable counting. However, as developers, we often need programmatic access to syllable counting functionality in our applications.
+This library powers [FreeSyllableCounter.com](https://freesyllablecounter.com/), which provides an excellent web interface for syllable counting. As developers, you can use the same powerful engine that drives their website in your own applications.
 
 **What makes this library special:**
 - **Programmatic API**: Use syllable counting in your Node.js, React, Vue, or any JavaScript application
@@ -29,20 +29,16 @@ This library was inspired by [FreeSyllableCounter.com](https://freesyllablecount
 - **TypeScript**: Full type safety and IntelliSense support
 - **Flexible**: Works with single words, sentences, or arrays of text
 
-## 🔄 Comparison with FreeSyllableCounter.com
+## 🔄 See It In Action
 
-| Feature | FreeSyllableCounter.com | CMU Syllable Counter |
-|---------|------------------------|---------------------|
-| **Interface** | Web UI | Programmatic API |
-| **Usage** | Manual input | Automated processing |
-| **Integration** | Copy-paste results | Direct function calls |
-| **Batch Processing** | One text at a time | Multiple texts simultaneously |
-| **Customization** | Limited | Full control over options |
-| **Hyphenation** | Basic | Advanced with custom patterns |
-| **Word Analysis** | Basic counting | Advanced search and analysis |
-| **Performance** | Good for single use | Optimized for bulk processing |
-| **TypeScript** | N/A | Full type safety |
-| **Caching** | N/A | Built-in performance optimization |
+[FreeSyllableCounter.com](https://freesyllablecounter.com/) is powered by this very package! Visit their website to see the library in action and test its capabilities.
+
+**What you get with this package:**
+- **Same Engine**: The exact same syllable counting engine that powers FreeSyllableCounter.com
+- **Programmatic Access**: Use it in your Node.js, React, Vue, or any JavaScript application
+- **Advanced Features**: Beyond what's shown on the website - includes advanced word analysis, rhyming detection, and more
+- **Full Control**: Customize hyphenation patterns, batch processing, and performance options
+- **TypeScript Support**: Full type safety and IntelliSense support
 
 **When to use this library:**
 - Building applications that need syllable counting
