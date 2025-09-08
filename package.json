@@ -1,6 +1,6 @@
 {
   "name": "cmu-syllable-counter",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "type": "module",
   "description": "Fast and accurate syllable counter for English words using CMU Dictionary",
   "main": "dist/index.cjs",
